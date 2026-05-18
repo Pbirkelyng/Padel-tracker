@@ -1,18 +1,27 @@
-from passlib.context import CryptContext
+import bcrypt
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from app.config import get_settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SESSION_COOKIE = "padel_session"
+
+# bcrypt has a 72-byte input limit; truncate to be safe with long passwords.
+_BCRYPT_MAX_BYTES = 72
+
+
+def _encode(password: str) -> bytes:
+    return password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(_encode(password), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(_encode(plain), hashed.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def _serializer() -> URLSafeTimedSerializer:

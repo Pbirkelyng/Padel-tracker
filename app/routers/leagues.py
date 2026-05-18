@@ -17,6 +17,7 @@ from app.league_helpers import (
     match_count_by_league,
     memberships_for_home,
     next_league_slug,
+    pending_counts_by_admin_league,
     pending_join_count_for_admin,
     require_membership,
 )
@@ -47,6 +48,7 @@ def frontpage(request: Request, user: ApprovedUser, db: Session = Depends(get_db
 
     mc = match_count_by_league(db, set(my_ids))
     pend = pending_join_count_for_admin(db, user.id)
+    pending_by_league = pending_counts_by_admin_league(db, user.id)
 
     return templates.TemplateResponse(
         request,
@@ -58,6 +60,7 @@ def frontpage(request: Request, user: ApprovedUser, db: Session = Depends(get_db
             "discover_leagues": leagues_public,
             "match_counts": mc,
             "pending_admin_count": pend,
+            "pending_by_league": pending_by_league,
             "year": datetime.utcnow().year,
         },
     )
@@ -243,16 +246,16 @@ def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = 
         .order_by(LeagueMember.joined_at)
     ).all()
 
-    invites = []
+    # Invite links are visible (and creatable) by any active member.
+    invites = db.scalars(
+        select(LeagueInvite).where(
+            LeagueInvite.league_id == league.id,
+            LeagueInvite.accepted_at.is_(None),
+        ).order_by(LeagueInvite.created_at.desc()).limit(20)
+    ).all()
+
     link_candidates: list[User] = []
     if admin:
-        invites = db.scalars(
-            select(LeagueInvite).where(
-                LeagueInvite.league_id == league.id,
-                LeagueInvite.accepted_at.is_(None),
-            ).order_by(LeagueInvite.created_at.desc()).limit(20)
-        ).all()
-
         # Real (non-placeholder) approved users an admin can merge a
         # placeholder into. We intentionally include users already in the
         # league (active or pending join request): merging is the way to
@@ -279,6 +282,7 @@ def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = 
             "invites": invites,
             "link_candidates": link_candidates,
             "is_admin": admin,
+            "nav_members_pending": len(pend) if admin else 0,
         },
     )
 
@@ -404,9 +408,8 @@ def create_invite(
     league = get_league_by_slug(db, slug)
     if not league:
         return RedirectResponse("/", status_code=303)
-    me = require_membership(db, league, user.id)
-    if not is_league_admin(me):
-        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+    # Any active league member can mint invite links to share with friends.
+    require_membership(db, league, user.id)
     tok = secrets.token_urlsafe(32)
     db.add(
         LeagueInvite(

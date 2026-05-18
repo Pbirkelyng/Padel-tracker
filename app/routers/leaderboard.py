@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import ApprovedUser
-from app.league_helpers import get_league_by_slug, is_league_admin, require_membership
+from app.league_helpers import (
+    get_league_by_slug,
+    is_league_admin,
+    nav_pending_for_league,
+    require_membership,
+)
 from app.models import Season
 from app.services.seasons import end_current_season
 from app.services.stats import compute_leaderboard, sort_leaderboard
@@ -42,6 +47,7 @@ def leaderboard_page(
     if target_season is None:
         target_season = seasons_list[0] if seasons_list else None
 
+    nav_pending = nav_pending_for_league(db, league, user.id)
     if not target_season:
         return templates.TemplateResponse(
             request,
@@ -57,6 +63,7 @@ def leaderboard_page(
                 "is_league_admin": is_league_admin(mem),
                 "is_current_season": True,
                 "season_qs": "",
+                "nav_members_pending": nav_pending,
             },
         )
 
@@ -91,6 +98,7 @@ def leaderboard_page(
             "selected_season_id": target_season.id,
             "is_league_admin": is_league_admin(mem),
             "season_qs": season_qs,
+            "nav_members_pending": nav_pending,
         },
     )
 

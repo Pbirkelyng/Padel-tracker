@@ -88,6 +88,61 @@ def pending_join_count_for_admin(db: Session, admin_user_id: int) -> int:
     ) or 0
 
 
+def pending_count_for_league(db: Session, league_id: int) -> int:
+    """Count of pending join requests in a single league."""
+    return db.scalar(
+        select(func.count())
+        .select_from(LeagueMember)
+        .where(
+            LeagueMember.league_id == league_id,
+            LeagueMember.status == LeagueMemberStatus.pending_request,
+        )
+    ) or 0
+
+
+def pending_counts_by_admin_league(db: Session, admin_user_id: int) -> dict[int, int]:
+    """Returns {league_id: pending_count} for every league the user admins.
+
+    Used to show per-league notification badges on the home page and
+    next to the Members nav link.
+    """
+    admin_league_ids = list(db.scalars(
+        select(LeagueMember.league_id).where(
+            LeagueMember.user_id == admin_user_id,
+            LeagueMember.role == LeagueMemberRole.admin,
+            LeagueMember.status == LeagueMemberStatus.active,
+        )
+    ).all())
+    if not admin_league_ids:
+        return {}
+    rows = db.execute(
+        select(LeagueMember.league_id, func.count())
+        .where(
+            LeagueMember.league_id.in_(admin_league_ids),
+            LeagueMember.status == LeagueMemberStatus.pending_request,
+        )
+        .group_by(LeagueMember.league_id)
+    ).all()
+    return {int(lid): int(c) for lid, c in rows}
+
+
+def nav_pending_for_league(
+    db: Session, league: League | None, user_id: int
+) -> int:
+    """Returns the pending count for a league IF the user is its admin.
+
+    This is the number that drives the red dot on the "Members" nav link
+    while browsing a league. Returns 0 in every other case so the dot
+    silently disappears for non-admins and outside league pages.
+    """
+    if league is None:
+        return 0
+    member = get_active_membership(db, league.id, user_id)
+    if not member or not is_league_admin(member):
+        return 0
+    return pending_count_for_league(db, league.id)
+
+
 def create_placeholder_member(
     db: Session,
     league_id: int,

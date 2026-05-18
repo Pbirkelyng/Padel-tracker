@@ -33,6 +33,13 @@
             </button>
           </form>
           <h2 class="text-xl font-semibold text-slate-900 tracking-tight"><a href="/leagues/{{ lg.slug }}/schedule" class="hover:text-blue-600">{{ lg.name }}</a></h2>
+          {% set lp = pending_by_league.get(lg.id, 0) %}
+          {% if lp > 0 and lm.role.value == 'admin' %}
+          <a href="/leagues/{{ lg.slug }}/members" class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100" title="Pending member request(s)">
+            <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+            {{ lp }} pending
+          </a>
+          {% endif %}
         </div>
         <p class="text-sm text-slate-500 mt-3">{{ match_counts.get(lg.id, 0) }} matches · <code class="text-xs bg-slate-100 px-2 py-0.5 rounded-md text-slate-700">{{ lg.slug }}</code></p>
       </div>

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
 from app.deps import ApprovedUser
-from app.league_helpers import get_active_membership, is_league_admin
+from app.league_helpers import get_active_membership, is_league_admin, nav_pending_for_league
 from app.models import (
     LeagueMember,
     LeagueMemberStatus,
@@ -116,6 +116,15 @@ def match_detail(
             if m.user_id not in existing_ids and m.user.status == UserStatus.approved
         ]
 
+    # Any active member who isn't already on a scheduled match with open
+    # slots can sign themselves up.
+    user_on_match = any(p.user_id == user.id for p in match.players)
+    can_self_join = (
+        match.status == MatchStatus.scheduled
+        and not user_on_match
+        and len(match.players) < 4
+    )
+
     return templates.TemplateResponse(
         request,
         "matches/detail.html",
@@ -133,10 +142,12 @@ def match_detail(
             "can_manage_teams": match.status == MatchStatus.scheduled,
             "can_manage_scores": match.status == MatchStatus.scheduled and can_manage,
             "can_manage_roster": can_manage,
+            "can_self_join": can_self_join,
             "player_ratings": player_ratings,
             "addable_members": addable_members,
             "sets_needed": sets_needed,
             "valid_set_pairs_json": valid_set_pairs_json,
+            "nav_members_pending": nav_pending_for_league(db, match.league, user.id),
         },
     )
 
@@ -158,7 +169,10 @@ def add_player_to_match(
     is_creator_or_admin = (
         user.is_admin or match.created_by_id == user.id or is_league_admin(mem)
     )
-    if not is_creator_or_admin:
+    is_self_add = player_id == user.id
+    # Non-admin members can add themselves (sign up for a match). Admins,
+    # match creators, and site admins can add anyone.
+    if not is_creator_or_admin and not is_self_add:
         return RedirectResponse(f"/matches/{match_id}", status_code=303)
 
     if len(match.players) >= 4:

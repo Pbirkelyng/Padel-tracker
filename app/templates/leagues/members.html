@@ -6,6 +6,19 @@
 <h1 class="text-3xl font-bold tracking-tight text-slate-900">Members</h1>
 <p class="text-slate-500 text-sm mb-8 mt-2">Invite links · pending requests · roster</p>
 
+{% if is_admin and pending %}
+<div class="mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-rose-50/90 border border-rose-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+  <span class="relative inline-flex h-2.5 w-2.5">
+    <span class="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping"></span>
+    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500"></span>
+  </span>
+  <p class="text-sm text-rose-950 flex-1">
+    <strong>{{ pending|length }} pending join request{{ 's' if pending|length != 1 else '' }}</strong> waiting for approval.
+  </p>
+  <a href="#pending" class="text-sm font-semibold text-rose-700 hover:text-rose-900">Review →</a>
+</div>
+{% endif %}
+
 {% if is_admin %}
 <section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
   <h2 class="text-lg font-semibold text-slate-900 mb-1">Add a player</h2>
@@ -18,37 +31,29 @@
 </section>
 {% endif %}
 
-{% if invites and is_admin %}
 <section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
-  <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite links</h2>
-  <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3 mb-5">
-    <input type="text" name="email_hint" placeholder="Email note (optional)" class="flex-1 min-w-[200px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+  <h2 class="text-lg font-semibold text-slate-900 mb-1">Invite links</h2>
+  <p class="text-xs text-slate-500 mb-4">Share with anyone you want to add. They'll need an account, then the link drops them straight into the league.</p>
+  <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3 {% if invites %}mb-5{% endif %}">
+    <input type="text" name="email_hint" placeholder="Note for yourself (optional, e.g. 'Maria')" class="flex-1 min-w-[200px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
     <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Generate link</button>
   </form>
+  {% if invites %}
   <ul class="space-y-3 text-sm">
     {% for inv in invites %}
     <li class="flex flex-wrap items-center gap-3 p-4 bg-slate-50/80 rounded-2xl border border-slate-100">
       <code class="text-xs break-all flex-1 text-slate-700" id="link-{{ inv.id }}">{{ request.url.scheme }}://{{ request.url.netloc }}/invite/{{ inv.token }}</code>
+      {% if inv.email %}<span class="text-xs text-slate-400 shrink-0">{{ inv.email }}</span>{% endif %}
       <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('link-{{ inv.id }}').textContent)" class="shrink-0 text-blue-600 text-xs font-semibold hover:text-blue-800">Copy</button>
     </li>
     {% endfor %}
   </ul>
+  {% endif %}
 </section>
-{% endif %}
-
-{% if is_admin and not invites %}
-<section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6 md:p-7">
-  <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite links</h2>
-  <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3">
-    <input type="text" name="email_hint" placeholder="Email note (optional)" class="flex-1 min-w-[200px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
-    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Generate link</button>
-  </form>
-</section>
-{% endif %}
 
 {% if pending and is_admin %}
-<section class="mb-8">
-  <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-3">Pending</h2>
+<section id="pending" class="mb-8 scroll-mt-20">
+  <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-rose-600 mb-3">Pending</h2>
   <ul class="space-y-3">
     {% for p in pending %}
     <li class="flex flex-wrap justify-between gap-3 items-center rounded-3xl bg-white border border-slate-200/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">

@@ -123,6 +123,16 @@
     {% elif can_manage_roster and match.players|length >= 4 %}
     <p class="mt-6 text-xs text-slate-500">Roster is full (4 players). Remove a player above to swap.</p>
     {% endif %}
+
+    {% if can_self_join and not can_manage_roster %}
+    <div class="mt-6 rounded-2xl bg-blue-50/50 border border-blue-100 p-5 flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm text-slate-700">Want in on this match? <span class="text-slate-500">({{ match.players|length }}/4 signed up)</span></p>
+      <form method="post" action="/matches/{{ match.id }}/players">
+        <input type="hidden" name="player_id" value="{{ user.id }}">
+        <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Sign me up</button>
+      </form>
+    </div>
+    {% endif %}
     {% endif %}
   </section>
 

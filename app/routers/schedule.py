@@ -11,6 +11,7 @@ from app.league_helpers import (
     current_season,
     get_active_membership,
     get_league_by_slug,
+    nav_pending_for_league,
     require_membership,
 )
 from app.models import (
@@ -89,6 +90,7 @@ def schedule_page(
             "league_slug": slug,
             "upcoming": upcoming,
             "past": past,
+            "nav_members_pending": nav_pending_for_league(db, league, user.id),
         },
     )
 
@@ -114,7 +116,14 @@ def new_match_page(slug: str, request: Request, user: ApprovedUser, db: Session 
     return templates.TemplateResponse(
         request,
         "schedule/new_match.html",
-        {"user": user, "roster": roster, "error": None, "league": league, "league_slug": slug},
+        {
+            "user": user,
+            "roster": roster,
+            "error": None,
+            "league": league,
+            "league_slug": slug,
+            "nav_members_pending": nav_pending_for_league(db, league, user.id),
+        },
     )
 
 

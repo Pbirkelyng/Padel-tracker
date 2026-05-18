@@ -33,7 +33,12 @@
         {% if lg %}
         <a href="/leagues/{{ lg }}/schedule" class="hover:text-blue-600 {% if '/schedule' in request.url.path %}text-blue-600 font-medium{% endif %}">Schedule</a>
         <a href="/leagues/{{ lg }}/leaderboard" class="hover:text-blue-600 {% if '/leaderboard' in request.url.path %}text-blue-600 font-medium{% endif %}">Leaderboard</a>
-        <a href="/leagues/{{ lg }}/members" class="hover:text-blue-600 {% if '/members' in request.url.path %}text-blue-600 font-medium{% endif %}">Members</a>
+        <a href="/leagues/{{ lg }}/members" class="relative inline-flex items-center gap-1 hover:text-blue-600 {% if '/members' in request.url.path %}text-blue-600 font-medium{% endif %}">
+          Members
+          {% if nav_members_pending and nav_members_pending > 0 %}
+          <span class="inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-rose-500 text-white text-[10px] font-semibold leading-none" title="Pending join request(s)">{{ nav_members_pending }}</span>
+          {% endif %}
+        </a>
         {% endif %}
         {% if user.is_admin %}
         <a href="/admin" class="hover:text-blue-600 {% if request.url.path.startswith('/admin') %}text-blue-600 font-medium{% endif %}">Admin</a>

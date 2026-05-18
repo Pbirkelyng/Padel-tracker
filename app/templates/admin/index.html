@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-8">Site admin</h1>
+
+<section class="mb-10">
+  <h2 class="text-sm font-semibold text-amber-700 uppercase tracking-wide mb-3">Pending users</h2>
+  {% if pending %}
+  <ul class="space-y-3">
+    {% for u in pending %}
+    <li class="flex flex-wrap justify-between gap-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+      <div>
+        <p class="font-medium">{{ u.display_name }}</p>
+        <p class="text-sm text-slate-500">{{ u.email }}</p>
+      </div>
+      <div class="flex gap-2">
+        <form method="post" action="/admin/users/{{ u.id }}/approve"><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm">Approve</button></form>
+        <form method="post" action="/admin/users/{{ u.id }}/reject"><button type="submit" class="px-4 py-2 border border-red-200 text-red-700 rounded-xl text-sm">Reject</button></form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-slate-500 text-sm">No pending users.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Approved</h2>
+  <ul class="bg-white border border-slate-200 rounded-2xl divide-y divide-slate-100 shadow-sm">
+    {% for u in approved %}
+    <li class="px-4 py-3 flex justify-between items-center text-sm">
+      <span>{{ u.display_name }} <span class="text-slate-400">({{ u.email }})</span>{% if u.is_admin %} <span class="text-blue-600 text-xs">app admin</span>{% endif %}</span>
+      {% if not u.is_admin %}
+      <form method="post" action="/admin/users/{{ u.id }}/promote"><button type="submit" class="text-blue-600 text-xs">Grant app admin</button></form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Members — {{ league.name }}{% endblock %}
+{% block content %}
+{% set league_slug = league.slug %}
+<p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-2">{{ league.name }}</p>
+<h1 class="text-3xl font-bold tracking-tight text-slate-900">Members</h1>
+<p class="text-slate-500 text-sm mb-8 mt-2">Invite links · pending requests · roster</p>
+
+{% if invites and membership.role.value == 'admin' %}
+<section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
+  <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite links</h2>
+  <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3 mb-5">
+    <input type="text" name="email_hint" placeholder="Email note (optional)" class="flex-1 min-w-[200px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Generate link</button>
+  </form>
+  <ul class="space-y-3 text-sm">
+    {% for inv in invites %}
+    <li class="flex flex-wrap items-center gap-3 p-4 bg-slate-50/80 rounded-2xl border border-slate-100">
+      <code class="text-xs break-all flex-1 text-slate-700" id="link-{{ inv.id }}">{{ request.url.scheme }}://{{ request.url.netloc }}/invite/{{ inv.token }}</code>
+      <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('link-{{ inv.id }}').textContent)" class="shrink-0 text-blue-600 text-xs font-semibold hover:text-blue-800">Copy</button>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if pending and membership.role.value == 'admin' %}
+<section class="mb-8">
+  <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-3">Pending</h2>
+  <ul class="space-y-3">
+    {% for p in pending %}
+    <li class="flex flex-wrap justify-between gap-3 items-center rounded-3xl bg-white border border-slate-200/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <span class="font-medium text-slate-900">{{ p.user.display_name }} <span class="text-slate-500 font-normal text-sm">({{ p.user.email }})</span></span>
+      <span class="flex gap-2">
+        <form method="post" action="/leagues/{{ league.slug }}/members/{{ p.user.id }}/approve"><button class="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-[0_6px_12px_-8px_rgba(37,99,235,0.5)]">Approve</button></form>
+        <form method="post" action="/leagues/{{ league.slug }}/members/{{ p.user.id }}/reject"><button class="text-sm px-4 py-2 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50">Reject</button></form>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section>
+  <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-4">Active members</h2>
+  <ul class="rounded-3xl bg-white border border-slate-200/70 divide-y divide-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
+    {% for m in members %}
+    <li class="px-5 py-4 flex justify-between text-sm items-center">
+      <span class="font-medium text-slate-900">{{ m.user.display_name }}{% if m.role.value == 'admin' %} <span class="text-blue-600 text-xs font-semibold ml-1">admin</span>{% endif %}</span>
+      <span class="text-slate-500 tabular-nums">{{ m.rating|round(0)|int }} ELO</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<a href="/leagues/{{ league.slug }}/schedule" class="inline-flex mt-8 text-sm font-medium text-blue-600 hover:text-blue-700">← Schedule</a>
+{% endblock %}

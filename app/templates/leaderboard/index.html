@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<div class="flex flex-wrap gap-4 items-end justify-between mb-6">
+  <div>
+    <h1 class="text-3xl font-bold tracking-tight">Leaderboard</h1>
+    <p class="text-sm text-slate-500 mt-1">{{ league.name }}</p>
+  </div>
+  <form method="get" action="/leagues/{{ league_slug }}/leaderboard" class="flex gap-2 items-center">
+    <label class="text-sm text-slate-600">Season
+      <select name="season" onchange="this.form.submit()" class="ml-1 border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white">
+        {% for s in seasons %}
+        <option value="{{ s.id }}" {% if selected_season_id == s.id %}selected{% endif %}>{{ s.name }}{% if s.is_current %} · current{% endif %}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <input type="hidden" name="sort" value="{{ sort }}">
+  </form>
+</div>
+
+{% if is_league_admin and is_current_season %}
+<details class="mb-6 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+  <summary class="cursor-pointer font-medium text-slate-800">End season</summary>
+  <form method="post" action="/leagues/{{ league_slug }}/leaderboard/end-season" class="mt-4 space-y-3" onsubmit="return confirm('End current season? Ratings soft-reset toward default.');">
+    <input type="hidden" name="confirm_end" value="yes">
+    <p class="text-sm text-slate-500">Freezes leaderboard snapshot, soft-resets ELO, opens a new season for new matches.</p>
+    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium">Confirm end season</button>
+  </form>
+</details>
+{% endif %}
+
+<div id="leaderboard-table">
+  {% include "leaderboard/_table.html" %}
+</div>
+{% endblock %}

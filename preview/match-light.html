@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Match — demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11','ss01'; }</style>
+</head>
+<body class="min-h-screen text-slate-900 px-4 py-10 md:pb-14 antialiased bg-[radial-gradient(1200px_500px_at_50%_-200px,#dbeafe_0%,transparent_60%),linear-gradient(to_bottom,#f8fafc,#ffffff)] max-w-xl mx-auto">
+  <a href="schedule-light.html" class="text-sm font-semibold text-blue-600 hover:text-blue-800 inline-flex mb-6">← Schedule</a>
+
+  <div class="rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-8 mb-12">
+    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-3">Match</p>
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-6">Wed 21 May · 17:45</h1>
+
+    <div class="flex items-start gap-2 text-slate-600 text-sm mb-5">
+      <svg class="h-4 w-4 shrink-0 mt-0.5 text-blue-600/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <span>Clubhouse · Court 2</span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 text-sm mb-10">
+      <span class="text-slate-500">Format:</span>
+      <div id="bo-group" class="inline-flex rounded-2xl border border-slate-200 bg-slate-50/80 p-1 gap-0.5">
+        <button type="button" data-bo="3" class="bo-btn px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset]">Best of 3</button>
+        <button type="button" data-bo="5" class="bo-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-white/90">Best of 5</button>
+        <button type="button" data-bo="7" class="bo-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-white/90">Best of 7</button>
+      </div>
+      <span id="status-badge" class="rounded-full px-3 py-0.5 text-xs font-medium border border-blue-100 bg-blue-50 text-blue-800">Scheduled</span>
+      <button type="button" id="toggle-locked" class="text-xs font-medium text-slate-500 underline hover:text-blue-600">Simulate locked match</button>
+    </div>
+
+    <div id="locked-banner" class="hidden rounded-2xl px-5 py-4 bg-blue-50/90 border border-blue-100 mb-8">
+      <p class="font-semibold text-blue-900">Team A won</p>
+      <p class="text-xs text-slate-600 mt-2">Score locked. Only league or site admins can reopen this match.</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="rounded-3xl bg-gradient-to-br from-blue-50 to-white border border-blue-100/80 p-5">
+        <h3 class="font-semibold text-blue-900 mb-3">Team A</h3>
+        <p class="text-sm text-slate-800 leading-relaxed">Maria (1038)<br>Lars (1001)</p>
+      </div>
+      <div class="rounded-3xl bg-gradient-to-br from-amber-50 to-white border border-amber-100/80 p-5">
+        <h3 class="font-semibold text-amber-900 mb-3">Team B</h3>
+        <p class="text-sm text-slate-800 leading-relaxed">Sofia (992)<br>Jonas (1002)</p>
+      </div>
+    </div>
+
+    <div id="assign-section" class="mb-10 space-y-3">
+      <p class="text-sm font-medium text-slate-700">Assign sides <span class="font-normal text-slate-500">(any league member until finalized)</span></p>
+      <div class="flex items-center justify-between bg-slate-50/80 rounded-2xl p-4 border border-slate-100"><span class="font-medium">Maria</span><div class="flex gap-2"><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 text-white">A</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border">B</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border text-slate-500">—</button></div></div>
+      <div class="flex items-center justify-between bg-slate-50/80 rounded-2xl p-4 border border-slate-100"><span class="font-medium">Lars</span><div class="flex gap-2"><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 text-white">A</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border">B</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border text-slate-500">—</button></div></div>
+      <div class="flex items-center justify-between bg-slate-50/80 rounded-2xl p-4 border border-slate-100"><span class="font-medium">Sofia</span><div class="flex gap-2"><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border">A</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500 text-white">B</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border text-slate-500">—</button></div></div>
+      <div class="flex items-center justify-between bg-slate-50/80 rounded-2xl p-4 border border-slate-100"><span class="font-medium">Jonas</span><div class="flex gap-2"><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border">A</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500 text-white">B</button><button type="button" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border text-slate-500">—</button></div></div>
+    </div>
+
+    <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-4">Score</h2>
+    <p id="sets-hint" class="text-xs text-slate-500 mb-4">Starts with sets to decide the match — e.g. best of 3 shows two set rows until you split 1-1.</p>
+
+    <div id="sets-container" class="space-y-3"></div>
+
+    <div id="score-actions" class="flex flex-wrap gap-3 mt-8">
+      <button type="button" class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_18px_-10px_rgba(37,99,235,0.55)]">Finalize (demo)</button>
+      <button type="button" class="px-5 py-2.5 rounded-xl text-sm font-medium border border-slate-200 bg-white hover:bg-slate-50">Save draft (demo)</button>
+    </div>
+    <p class="text-xs text-slate-400 mt-5 leading-relaxed">Try 6–4 / 4–6: a third set row appears. Enter another complete set pair to simulate a finish — extra blank rows disappear when the winner is decided.</p>
+  </div>
+
+<script>
+(function () {
+  var PRESET_RAW = JSON.parse('[[6, 0],[6, 1],[6, 2],[6, 3],[6, 4],[7, 5],[7, 6]]');
+  var VALID_PAIR_STRS = new Set(
+    PRESET_RAW.map(function (pair) {
+      return Math.max(pair[0], pair[1]) + '-' + Math.min(pair[0], pair[1]);
+    })
+  );
+
+  function neededFor(bestOf) {
+    return Math.ceil(bestOf / 2);
+  }
+
+  var BEST_OF = 3;
+  var NEEDED = neededFor(BEST_OF);
+  var container = document.getElementById('sets-container');
+
+  function numVal(inp) {
+    if (!inp || inp.value === '' || inp.value === null) return 0;
+    var n = Number(inp.value);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function strVal(inp) {
+    return inp ? String(inp.value || '').trim() : '';
+  }
+  function decidedWinner(row) {
+    var aEl = row.querySelector('[data-a]');
+    var bEl = row.querySelector('[data-b]');
+    var a = numVal(aEl);
+    var b = numVal(bEl);
+    if (a === 0 && b === 0 && !strVal(aEl) && !strVal(bEl)) return null;
+    if (a === b) return null;
+    var hi = Math.max(a, b);
+    var lo = Math.min(a, b);
+    if (!VALID_PAIR_STRS.has(hi + '-' + lo)) return null;
+    return a > b ? 'A' : 'B';
+  }
+  function isRowBlank(row) {
+    var aEl = row.querySelector('[data-a]');
+    var bEl = row.querySelector('[data-b]');
+    var taEl = row.querySelector('[data-ta]');
+    var tbEl = row.querySelector('[data-tb]');
+    return numVal(aEl) === 0 && numVal(bEl) === 0 && !strVal(taEl) && !strVal(tbEl);
+  }
+  function getRows() {
+    return [].slice.call(container.querySelectorAll('.set-row'));
+  }
+
+  function createRow(aGames, bGames, aTb, bTb) {
+    var row = document.createElement('div');
+    row.className = 'set-row flex flex-wrap items-center gap-x-3 gap-y-2 bg-slate-50/40 p-5 rounded-2xl border border-slate-100';
+    row.innerHTML =
+      '<span class="text-sm font-medium text-slate-600 w-14 set-label">Set —</span>' +
+      '<input type="number" data-a name="_a" min="0" max="7" value="' + String(aGames) + '" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
+      '<span class="text-slate-400 font-light">—</span>' +
+      '<input type="number" data-b name="_b" min="0" max="7" value="' + String(bGames) + '" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
+      '<span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TB</span>' +
+      '<input type="text" data-ta name="_ta" value="' + (aTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm">' +
+      '<input type="text" data-tb name="_tb" value="' + (bTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm">';
+    return row;
+  }
+
+  function renumber() {
+    getRows().forEach(function (row, i) {
+      var n = i + 1;
+      row.querySelector('.set-label').textContent = 'Set ' + n;
+    });
+  }
+
+  function computeTarget(rows) {
+    var setsA = 0;
+    var setsB = 0;
+    var lastDecided = -1;
+    rows.forEach(function (row, idx) {
+      var w = decidedWinner(row);
+      if (w === 'A') { setsA++; lastDecided = idx; }
+      else if (w === 'B') { setsB++; lastDecided = idx; }
+    });
+    var matchOver = setsA >= NEEDED || setsB >= NEEDED;
+    var target = matchOver ? lastDecided + 1 : Math.max(NEEDED, lastDecided + 2);
+    target = Math.max(target, NEEDED);
+    target = Math.min(target, BEST_OF);
+    return target;
+  }
+
+  function syncRows() {
+    var rows = getRows();
+    if (!rows.length) return;
+    var target = computeTarget(rows);
+    while (rows.length > target && isRowBlank(rows[rows.length - 1])) {
+      rows[rows.length - 1].remove();
+      rows.pop();
+    }
+    while (rows.length < target) {
+      container.appendChild(createRow(0, 0, '', ''));
+      rows = getRows();
+    }
+    renumber();
+    document.getElementById('sets-hint').textContent =
+      'Race to ' + NEEDED + ' sets (best of ' + BEST_OF + '). ' +
+      'Enter valid padel tennis set scores.';
+  }
+
+  function seedMinimalRows() {
+    container.innerHTML = '';
+    for (var i = 0; i < NEEDED; i++) container.appendChild(createRow(0, 0, '', ''));
+    renumber();
+  }
+
+  function setBestOf(n) {
+    BEST_OF = n;
+    NEEDED = neededFor(BEST_OF);
+    seedMinimalRows();
+    syncRows();
+
+    document.querySelectorAll('.bo-btn').forEach(function (btn) {
+      var on = Number(btn.getAttribute('data-bo')) === BEST_OF;
+      btn.className = 'bo-btn px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ' +
+        (on ? 'bg-blue-600 text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset]' : 'text-slate-600 hover:bg-white/90');
+    });
+  }
+
+  document.querySelector('#bo-group').addEventListener('click', function (e) {
+    var t = e.target.closest('.bo-btn');
+    if (!t) return;
+    setBestOf(Number(t.getAttribute('data-bo')));
+  });
+
+  container.addEventListener('input', function () {
+    syncRows();
+  });
+
+  seedMinimalRows();
+  syncRows();
+})();
+
+(function () {
+  var locked = false;
+  var btn = document.getElementById('toggle-locked');
+  var banner = document.getElementById('locked-banner');
+  var badge = document.getElementById('status-badge');
+  var assign = document.getElementById('assign-section');
+  var scoreActions = document.getElementById('score-actions');
+  var boGroup = document.getElementById('bo-group');
+  if (!btn) return;
+
+  btn.addEventListener('click', function () {
+    locked = !locked;
+    banner.classList.toggle('hidden', !locked);
+    assign.classList.toggle('hidden', locked);
+    scoreActions.classList.toggle('hidden', locked);
+    if (boGroup) boGroup.classList.toggle('opacity-50', locked);
+    if (boGroup) boGroup.querySelectorAll('button').forEach(function (b) { b.disabled = locked; });
+    badge.textContent = locked ? 'Completed' : 'Scheduled';
+    badge.className = locked
+      ? 'rounded-full px-3 py-0.5 text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-900'
+      : 'rounded-full px-3 py-0.5 text-xs font-medium border border-blue-100 bg-blue-50 text-blue-800';
+    btn.textContent = locked ? 'Back to editable' : 'Simulate locked match';
+  });
+})();
+</script>
+</body>
+</html>

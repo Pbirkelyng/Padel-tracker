@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leaderboard — demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11','ss01'; }</style>
+</head>
+<body class="min-h-screen text-slate-900 antialiased bg-[radial-gradient(1200px_500px_at_50%_-200px,#dbeafe_0%,transparent_60%),linear-gradient(to_bottom,#f8fafc,#ffffff)]">
+  <header class="hidden md:block border-b border-slate-200/80 bg-white/90 backdrop-blur sticky top-0 z-40 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <nav class="max-w-4xl mx-auto px-4 py-3 flex gap-8 text-sm items-center">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-blue-600">
+        <span class="h-2 w-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.2)]"></span>
+        Padel Tracker
+      </a>
+      <a href="leagues-dashboard.html" class="text-slate-600 hover:text-blue-600">Leagues</a>
+      <a href="schedule-light.html" class="text-slate-600 hover:text-blue-600">Schedule</a>
+      <span class="text-blue-600 font-semibold">Leaderboard</span>
+      <a href="members-light.html" class="text-slate-600 hover:text-blue-600">Members</a>
+    </nav>
+  </header>
+  <main class="max-w-4xl mx-auto px-4 py-8 md:py-10">
+    <div class="flex flex-wrap gap-6 justify-between mb-8">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-2">Rankings</p>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900">Leaderboard</h1>
+        <p class="text-sm text-slate-500 mt-2">Default League</p>
+      </div>
+      <label class="text-sm flex items-center gap-3 bg-white px-5 py-3 border border-slate-200/70 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)]">Season
+        <select class="border border-slate-200 rounded-xl px-3 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/25">
+          <option>Season 2 · current</option>
+          <option>Season 1</option>
+        </select>
+      </label>
+    </div>
+    <details class="mb-8 rounded-3xl bg-white border border-slate-200/70 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <summary class="cursor-pointer font-semibold text-slate-900">End season</summary>
+      <p class="text-sm text-slate-500 mt-4 mb-5 leading-relaxed">Snapshots ratings, soft-resets ELO, starts the next season.</p>
+      <button type="button" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700">Confirm end season</button>
+    </details>
+    <div class="overflow-x-auto rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.08)]">
+      <table class="w-full text-sm min-w-[720px]">
+        <thead>
+          <tr class="border-b border-slate-200 text-slate-500 text-left bg-slate-50/80">
+            <th class="py-3 px-4">#</th>
+            <th class="py-3 px-4"><a href="#" class="underline decoration-slate-300 hover:text-blue-600 font-medium text-blue-700">Player</a></th>
+            <th class="py-3 px-4 text-right"><a href="#" class="underline decoration-slate-300 hover:text-blue-600 text-blue-700 font-semibold">ELO</a></th>
+            <th class="py-3 px-4 text-right"><a href="#" class="underline decoration-slate-300 hover:text-blue-600">Matches</a></th>
+            <th class="py-3 px-4 text-right">Win %</th>
+            <th class="py-3 px-4 text-right"><a href="#" class="underline decoration-slate-300 hover:text-blue-600">Sets</a></th>
+            <th class="py-3 px-4 text-right"><a href="#" class="underline decoration-slate-300 hover:text-blue-600">Games</a></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-slate-100 hover:bg-slate-50/80">
+            <td class="py-3 px-4 text-slate-400">1</td>
+            <td class="py-3 px-4 font-medium text-slate-900">Maria</td>
+            <td class="py-3 px-4 text-right text-blue-600 font-medium tabular-nums">1038</td>
+            <td class="py-3 px-4 text-right tabular-nums">9-2</td>
+            <td class="py-3 px-4 text-right tabular-nums">81.8%</td>
+            <td class="py-3 px-4 text-right tabular-nums">21-10 <span class="text-slate-400">(67.7%)</span></td>
+            <td class="py-3 px-4 text-right tabular-nums">142-118</td>
+          </tr>
+          <tr class="border-b border-slate-100 hover:bg-slate-50/80">
+            <td class="py-3 px-4 text-slate-400">2</td>
+            <td class="py-3 px-4 font-medium text-slate-900">Anders</td>
+            <td class="py-3 px-4 text-right text-blue-600 font-medium tabular-nums">1042</td>
+            <td class="py-3 px-4 text-right tabular-nums">8-4</td>
+            <td class="py-3 px-4 text-right tabular-nums">66.7%</td>
+            <td class="py-3 px-4 text-right tabular-nums">17-15 <span class="text-slate-400">(53.1%)</span></td>
+            <td class="py-3 px-4 text-right tabular-nums">135-128</td>
+          </tr>
+          <tr class="border-b border-slate-100 hover:bg-slate-50/80">
+            <td class="py-3 px-4 text-slate-400">3</td>
+            <td class="py-3 px-4 font-medium text-slate-900">Jonas</td>
+            <td class="py-3 px-4 text-right text-blue-600 font-medium tabular-nums">1002</td>
+            <td class="py-3 px-4 text-right tabular-nums">7-5</td>
+            <td class="py-3 px-4 text-right tabular-nums">58.3%</td>
+            <td class="py-3 px-4 text-right tabular-nums">14-16 <span class="text-slate-400">(46.7%)</span></td>
+            <td class="py-3 px-4 text-right tabular-nums">126-132</td>
+          </tr>
+          <tr class="border-b border-slate-100 hover:bg-slate-50/80">
+            <td class="py-3 px-4 text-slate-400">4</td>
+            <td class="py-3 px-4 font-medium text-slate-900">Lars</td>
+            <td class="py-3 px-4 text-right text-blue-600 font-medium tabular-nums">1001</td>
+            <td class="py-3 px-4 text-right tabular-nums">6-6</td>
+            <td class="py-3 px-4 text-right tabular-nums">50.0%</td>
+            <td class="py-3 px-4 text-right tabular-nums">14-15 <span class="text-slate-400">(48.3%)</span></td>
+            <td class="py-3 px-4 text-right tabular-nums">128-130</td>
+          </tr>
+          <tr class="border-b border-slate-100 hover:bg-slate-50/80">
+            <td class="py-3 px-4 text-slate-400">5</td>
+            <td class="py-3 px-4 font-medium text-slate-900">Sofia</td>
+            <td class="py-3 px-4 text-right text-blue-600 font-medium tabular-nums">992</td>
+            <td class="py-3 px-4 text-right tabular-nums">5-8</td>
+            <td class="py-3 px-4 text-right tabular-nums">38.5%</td>
+            <td class="py-3 px-4 text-right tabular-nums">11-17 <span class="text-slate-400">(39.3%)</span></td>
+            <td class="py-3 px-4 text-right tabular-nums">118-138</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-slate-400 mt-4">Demo table mirrors live column layout (sort links are static).</p>
+  </main>
+</body>
+</html>

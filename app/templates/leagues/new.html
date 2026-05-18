@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}New league{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <h1 class="text-2xl font-bold mb-2">Add league</h1>
+  <p class="text-slate-500 text-sm mb-6">Global admins can create leagues. You become this league&apos;s administrator.</p>
+  {% if error %}
+  <div class="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="/leagues" class="space-y-4 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+    <label class="block text-sm text-slate-600">Name
+      <input type="text" name="name" required class="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500">
+    </label>
+    <label class="block text-sm text-slate-600">Description
+      <textarea name="description" rows="2" class="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2"></textarea>
+    </label>
+    <label class="flex items-center gap-2 text-sm text-slate-700">
+      <input type="checkbox" name="is_public" checked class="rounded border-slate-300 text-blue-600">
+      Public (others can request to join)
+    </label>
+    <button type="submit" class="w-full py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700">Create league</button>
+  </form>
+  <a href="/" class="inline-block mt-4 text-sm text-slate-500 hover:text-blue-600">← Back</a>
+</div>
+{% endblock %}

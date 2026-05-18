@@ -1,0 +1,2 @@
+"""Padel Tracker application."""
+

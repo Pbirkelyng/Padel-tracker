@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}Match{% endblock %}
+{% block content %}
+<a href="/leagues/{{ league_slug }}/schedule" class="text-sm font-medium text-blue-600 hover:text-blue-800 mb-5 inline-flex items-center gap-1">← Schedule</a>
+
+{% if error %}
+<div class="mb-4 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-sm">{{ error|replace('+', ' ') }}</div>
+{% endif %}
+{% if success %}
+<div class="mb-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm">{{ success|replace('+', ' ') }}</div>
+{% endif %}
+
+<div class="rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.12)] p-6 md:p-8 mb-10">
+  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-2">Match</p>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900">{{ match.scheduled_at|format_datetime }}</h1>
+      <div class="flex items-center gap-2 text-slate-600 text-sm mt-3">
+        <svg class="h-4 w-4 shrink-0 text-blue-600/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>{{ match.location or 'Location TBD' }}</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm">
+        {% if can_manage_scores %}
+        <span class="text-slate-500">Format:</span>
+        <div class="inline-flex rounded-2xl border border-slate-200 bg-slate-50/80 p-1 gap-0.5">
+          {% for bo in [3, 5, 7] %}
+          <form method="post" action="/matches/{{ match.id }}/best_of" class="inline">
+            <input type="hidden" name="best_of" value="{{ bo }}">
+            <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-semibold transition-all {% if match.best_of == bo %}bg-blue-600 text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset]{% else %}text-slate-600 hover:bg-white/90{% endif %}">Best of {{ bo }}</button>
+          </form>
+          {% endfor %}
+        </div>
+        {% else %}
+        <span class="text-slate-500">Best of <strong class="text-slate-800">{{ match.best_of }}</strong></span>
+        {% endif %}
+        <span class="text-slate-400 hidden sm:inline">·</span>
+        <span class="rounded-full px-3 py-0.5 text-xs font-medium border {% if match.status.value == 'completed' %}border-emerald-200 bg-emerald-50 text-emerald-900{% elif match.status.value == 'scheduled' %}border-blue-100 bg-blue-50 text-blue-800{% else %}border-slate-200 bg-slate-50 text-slate-700{% endif %}">{{ match.status.value|capitalize }}</span>
+      </div>
+    </div>
+    {% if match.status.value == 'completed' %}
+    <div class="rounded-2xl px-5 py-4 bg-blue-50/90 border border-blue-100 md:max-w-xs">
+      <p class="font-semibold text-blue-900">Team {{ match.winner_team }} won</p>
+      <p class="text-xs text-slate-600 mt-2">Score locked. Only league or site admins can reopen this match.</p>
+      {% if can_reopen_completed %}
+      <form action="/matches/{{ match.id }}/reopen" method="post" class="mt-4">
+        <button type="submit" class="text-sm font-semibold text-blue-700 underline decoration-blue-400 hover:text-blue-900">Reopen for editing</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <section class="mb-12">
+    <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-4">Teams</h2>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="rounded-3xl bg-gradient-to-br from-blue-50 to-white border border-blue-100/80 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+        <h3 class="font-semibold text-blue-900 mb-4">Team A</h3>
+        <ul class="space-y-2 text-sm text-slate-800">
+          {% for p in team_a %}
+          <li class="flex justify-between gap-2"><span>{{ p.user.display_name }}</span><span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span></li>
+          {% else %}
+          <li class="text-slate-400">—</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="rounded-3xl bg-gradient-to-br from-amber-50 to-white border border-amber-100/80 p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+        <h3 class="font-semibold text-amber-900 mb-4">Team B</h3>
+        <ul class="space-y-2 text-sm text-slate-800">
+          {% for p in team_b %}
+          <li class="flex justify-between gap-2"><span>{{ p.user.display_name }}</span><span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span></li>
+          {% else %}
+          <li class="text-slate-400">—</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    {% if can_manage_teams %}
+    <div class="mt-8 space-y-3">
+      <p class="text-sm font-medium text-slate-700">Assign sides <span class="font-normal text-slate-500">(any league member until the match is finalized)</span></p>
+      {% for p in match.players %}
+      <div class="flex items-center justify-between bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
+        <span class="font-medium text-slate-900">{{ p.user.display_name }}</span>
+        <div class="flex gap-2">
+          <form method="post" action="/matches/{{ match.id }}/teams/{{ p.user_id }}">
+            <input type="hidden" name="team" value="A">
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-xl {% if p.team == 'A' %}bg-blue-600 text-white shadow-[0_4px_12px_-6px_rgba(37,99,235,0.6)]{% else %}bg-white border border-slate-200 text-slate-700{% endif %}">A</button>
+          </form>
+          <form method="post" action="/matches/{{ match.id }}/teams/{{ p.user_id }}">
+            <input type="hidden" name="team" value="B">
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-xl {% if p.team == 'B' %}bg-amber-500 text-white shadow-[0_4px_12px_-6px_rgba(245,158,11,0.55)]{% else %}bg-white border border-slate-200 text-slate-700{% endif %}">B</button>
+          </form>
+          <form method="post" action="/matches/{{ match.id }}/teams/{{ p.user_id }}">
+            <input type="hidden" name="team" value="NONE">
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-500">—</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-4">Score</h2>
+    <form method="post" action="/matches/{{ match.id }}/scores" id="score-form">
+      <div id="sets-container" class="space-y-3">
+        {% if match.set_scores %}
+          {% for s in match.set_scores %}
+          <div class="set-row flex flex-wrap items-center gap-x-3 gap-y-2 bg-slate-50/40 p-5 rounded-2xl border border-slate-100">
+            <span class="text-sm font-medium text-slate-600 w-14 set-label">Set {{ s.set_number }}</span>
+            <input type="hidden" name="set_numbers" value="{{ s.set_number }}">
+            <input type="number" name="team_a_games" value="{{ s.team_a_games }}" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium" {% if match.status.value == 'completed' %}disabled{% endif %}>
+            <span class="text-slate-400 font-light">—</span>
+            <input type="number" name="team_b_games" value="{{ s.team_b_games }}" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium" {% if match.status.value == 'completed' %}disabled{% endif %}>
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TB</span>
+            <input type="text" name="team_a_tb" value="{{ s.team_a_tb or '' }}" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" {% if match.status.value == 'completed' %}disabled{% endif %} placeholder="">
+            <input type="text" name="team_b_tb" value="{{ s.team_b_tb or '' }}" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" {% if match.status.value == 'completed' %}disabled{% endif %} placeholder="">
+          </div>
+          {% endfor %}
+        {% else %}
+          {% for i in range(1, sets_needed + 1) %}
+          <div class="set-row flex flex-wrap items-center gap-x-3 gap-y-2 bg-slate-50/40 p-5 rounded-2xl border border-slate-100">
+            <span class="text-sm font-medium text-slate-600 w-14 set-label">Set {{ i }}</span>
+            <input type="hidden" name="set_numbers" value="{{ i }}">
+            <input type="number" name="team_a_games" value="0" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">
+            <span class="text-slate-400 font-light">—</span>
+            <input type="number" name="team_b_games" value="0" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TB</span>
+            <input type="text" name="team_a_tb" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">
+            <input type="text" name="team_b_tb" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      {% if can_manage_scores %}
+      <div class="flex flex-wrap gap-3 mt-8">
+        <button type="submit" name="action" value="save" class="px-5 py-2.5 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-800 hover:bg-slate-50">Save draft</button>
+        <button type="submit" name="action" value="finalize" class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_18px_-10px_rgba(37,99,235,0.55)]">Finalize</button>
+      </div>
+      {% endif %}
+    </form>
+    <p class="text-xs text-slate-400 mt-4 leading-relaxed">Valid sets include 6-0 … 6-4, 7-5, 7-6 (tiebreak scored for the winner at 7-6).</p>
+  </section>
+</div>
+
+{% if can_manage_scores %}
+<script>
+(function () {
+  var container = document.getElementById('sets-container');
+  if (!container) return;
+
+  var BEST_OF = {{ match.best_of }};
+  var NEEDED = {{ sets_needed }};
+  var VALID_PAIR_STRS = new Set(
+    {{ valid_set_pairs_json | safe }}.map(function (pair) {
+      var hi = Math.max(pair[0], pair[1]);
+      var lo = Math.min(pair[0], pair[1]);
+      return hi + '-' + lo;
+    })
+  );
+
+  function numVal(inp) {
+    if (!inp || inp.value === '' || inp.value === null) return 0;
+    var n = Number(inp.value);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function strVal(inp) {
+    return inp ? String(inp.value || '').trim() : '';
+  }
+
+  function decidedWinner(row) {
+    var aEl = row.querySelector('[name="team_a_games"]');
+    var bEl = row.querySelector('[name="team_b_games"]');
+    var a = numVal(aEl);
+    var b = numVal(bEl);
+    if (a === 0 && b === 0 && !strVal(aEl) && !strVal(bEl)) return null;
+    if (a === b) return null;
+    var hi = Math.max(a, b);
+    var lo = Math.min(a, b);
+    if (!VALID_PAIR_STRS.has(hi + '-' + lo)) return null;
+    return a > b ? 'A' : 'B';
+  }
+
+  function isRowBlank(row) {
+    var aEl = row.querySelector('[name="team_a_games"]');
+    var bEl = row.querySelector('[name="team_b_games"]');
+    var taEl = row.querySelector('[name="team_a_tb"]');
+    var tbEl = row.querySelector('[name="team_b_tb"]');
+    var a = numVal(aEl);
+    var b = numVal(bEl);
+    return a === 0 && b === 0 && !strVal(taEl) && !strVal(tbEl);
+  }
+
+  function getRows() {
+    return [].slice.call(container.querySelectorAll('.set-row'));
+  }
+
+  function createRow(aGames, bGames, aTb, bTb) {
+    var row = document.createElement('div');
+    row.className = 'set-row flex flex-wrap items-center gap-x-3 gap-y-2 bg-slate-50/40 p-5 rounded-2xl border border-slate-100';
+    row.innerHTML =
+      '<span class="text-sm font-medium text-slate-600 w-14 set-label">Set —</span>' +
+      '<input type="hidden" name="set_numbers" value="1">' +
+      '<input type="number" name="team_a_games" value="' + String(aGames) + '" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
+      '<span class="text-slate-400 font-light">—</span>' +
+      '<input type="number" name="team_b_games" value="' + String(bGames) + '" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
+      '<span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TB</span>' +
+      '<input type="text" name="team_a_tb" value="' + (aTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">' +
+      '<input type="text" name="team_b_tb" value="' + (bTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">';
+    return row;
+  }
+
+  function renumber() {
+    var rows = getRows();
+    for (var i = 0; i < rows.length; i++) {
+      var n = i + 1;
+      rows[i].querySelector('.set-label').textContent = 'Set ' + n;
+      rows[i].querySelector('input[name="set_numbers"]').value = String(n);
+    }
+  }
+
+  function computeTarget(rows) {
+    var setsA = 0;
+    var setsB = 0;
+    var lastDecided = -1;
+    rows.forEach(function (row, idx) {
+      var w = decidedWinner(row);
+      if (w === 'A') {
+        setsA++;
+        lastDecided = idx;
+      } else if (w === 'B') {
+        setsB++;
+        lastDecided = idx;
+      }
+    });
+    var matchOver = setsA >= NEEDED || setsB >= NEEDED;
+    var target = matchOver ? lastDecided + 1 : Math.max(NEEDED, lastDecided + 2);
+    target = Math.max(target, NEEDED);
+    target = Math.min(target, BEST_OF);
+    return target;
+  }
+
+  function syncRows() {
+    var rows = getRows();
+    if (!rows.length) return;
+    var target = computeTarget(rows);
+    while (rows.length > target && isRowBlank(rows[rows.length - 1])) {
+      rows[rows.length - 1].remove();
+      rows.pop();
+    }
+    while (rows.length < target) {
+      container.appendChild(createRow(0, 0, '', ''));
+      rows = getRows();
+    }
+    renumber();
+  }
+
+  container.addEventListener('input', function () {
+    syncRows();
+  });
+
+  syncRows();
+
+})();
+</script>
+{% endif %}
+{% endblock %}

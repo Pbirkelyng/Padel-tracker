@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Schedule — Padel Tracker{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-8 gap-4">
+  <div>
+    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-1">Schedule</p>
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Matches</h1>
+    {% if league %}<p class="text-sm text-slate-500 mt-2">{{ league.name }}</p>{% endif %}
+  </div>
+  <a href="/leagues/{{ league_slug }}/matches/new" class="hidden md:inline-flex px-5 py-2.5 rounded-xl font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_16px_-10px_rgba(37,99,235,0.5)]">+ New match</a>
+</div>
+
+<section class="mb-12">
+  <h2 class="text-xs font-semibold text-blue-600 uppercase tracking-[0.12em] mb-4">Upcoming</h2>
+  {% if upcoming %}
+  <ul class="space-y-4">
+    {% for m in upcoming %}
+    <li>
+      <a href="/matches/{{ m.id }}" class="group block rounded-3xl bg-white border border-slate-200/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] hover:border-blue-300/80 hover:shadow-[0_4px_28px_-16px_rgba(37,99,235,0.25)] transition-all">
+        <div class="flex justify-between gap-4">
+          <div class="min-w-0">
+            <p class="font-semibold text-slate-900 group-hover:text-blue-700">{{ m.scheduled_at|format_datetime }}</p>
+            {% if m.location %}<p class="text-sm text-slate-600 mt-1 flex items-center gap-1.5"><svg class="h-3.5 w-3.5 shrink-0 text-blue-600/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>{{ m.location }}</p>{% endif %}
+            <p class="text-sm text-slate-500 mt-2">
+              {% for p in m.players %}{{ p.user.display_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+            </p>
+          </div>
+          <span class="text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-100/80 shrink-0 h-fit">Best of {{ m.best_of }}</span>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-slate-500">No upcoming matches. <a href="/leagues/{{ league_slug }}/matches/new" class="text-blue-600 font-semibold hover:underline">Create one</a></p>
+  {% endif %}
+</section>
+
+<section>
+  <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-4">Past</h2>
+  {% if past %}
+  <ul class="space-y-3">
+    {% for m in past %}
+    <li>
+      <a href="/matches/{{ m.id }}" class="group block rounded-3xl bg-white/85 border border-slate-200/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_4px_24px_-16px_rgba(15,23,42,0.12)] transition-all">
+        <div class="flex justify-between gap-4">
+          <div class="min-w-0">
+            <p class="font-medium text-slate-900">{{ m.scheduled_at|format_datetime }}</p>
+            {% if m.location %}<p class="text-sm text-slate-500 mt-0.5">{{ m.location }}</p>{% endif %}
+            <p class="text-sm text-slate-500 mt-2">
+              {% for p in m.players %}{{ p.user.display_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+            </p>
+            {% if m.score_summary %}<p class="text-sm font-medium text-blue-600 mt-2">{{ m.score_summary }}</p>{% endif %}
+          </div>
+          {% if m.status.value == 'completed' and m.winner_team %}
+          <span class="text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-800 font-medium shrink-0 h-fit border border-blue-100/70">Team {{ m.winner_team }} won</span>
+          {% endif %}
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-slate-400">No past matches.</p>
+  {% endif %}
+</section>
+{% endblock %}

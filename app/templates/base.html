@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/static/icon.svg">
+  <title>{% block title %}Padel Tracker{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    body { padding-bottom: env(safe-area-inset-bottom); font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11', 'ss01'; }
+    .safe-bottom { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom)); }
+  </style>
+</head>
+<body class="h-full min-h-screen antialiased text-slate-900 bg-[radial-gradient(1200px_500px_at_50%_-200px,#dbeafe_0%,transparent_60%),linear-gradient(to_bottom,#f8fafc,#ffffff)]">
+  {% set lg = league_slug|default('', true) %}
+  <header class="hidden md:block border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-40 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <nav class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-2 text-xl font-bold tracking-tight text-blue-600 group">
+        <span class="h-2 w-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.2)] group-hover:shadow-[0_0_0_4px_rgba(37,99,235,0.25)] transition-shadow" aria-hidden="true"></span>
+        Padel Tracker
+      </a>
+      {% if user %}
+      <div class="flex items-center gap-4 text-sm text-slate-600">
+        <a href="/" class="hover:text-blue-600 {% if request.url.path == '/' %}text-blue-600 font-medium{% endif %}">Leagues</a>
+        {% if lg %}
+        <a href="/leagues/{{ lg }}/schedule" class="hover:text-blue-600 {% if '/schedule' in request.url.path %}text-blue-600 font-medium{% endif %}">Schedule</a>
+        <a href="/leagues/{{ lg }}/leaderboard" class="hover:text-blue-600 {% if '/leaderboard' in request.url.path %}text-blue-600 font-medium{% endif %}">Leaderboard</a>
+        <a href="/leagues/{{ lg }}/members" class="hover:text-blue-600 {% if '/members' in request.url.path %}text-blue-600 font-medium{% endif %}">Members</a>
+        {% endif %}
+        {% if user.is_admin %}
+        <a href="/admin" class="hover:text-blue-600 {% if request.url.path.startswith('/admin') %}text-blue-600 font-medium{% endif %}">Admin</a>
+        {% endif %}
+        <span class="text-slate-400">{{ user.display_name }}</span>
+        <form action="/logout" method="post" class="inline">
+          <button type="submit" class="text-slate-500 hover:text-slate-800">Logout</button>
+        </form>
+      </div>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-6 {% if user %}safe-bottom md:pb-6{% endif %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if user %}
+  {# Mobile icons: 22x22 stroke #}
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200/80 bg-white/95 backdrop-blur-md flex justify-around items-center px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_-6px_rgba(15,23,42,0.08)]">
+    <a href="/" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl {% if request.url.path == '/' %}text-blue-600 font-medium bg-blue-50/80{% else %}text-slate-500{% endif %}">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/></svg>
+      Leagues
+    </a>
+    {% if lg %}
+    <a href="/leagues/{{ lg }}/schedule" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl {% if '/schedule' in request.url.path and '/leagues/' in request.url.path %}text-blue-600 font-medium bg-blue-50/80{% else %}text-slate-500{% endif %}">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Schedule
+    </a>
+    <a href="/leagues/{{ lg }}/leaderboard" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl {% if '/leaderboard' in request.url.path %}text-blue-600 font-medium bg-blue-50/80{% else %}text-slate-500{% endif %}">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21h14M12 17l-3 4h6l-3-4zm-4-4h10l2 3V4H5v13l3-3zm4-9h2v7H9V7zm6 4h2v3h-2v-3z"/></svg>
+      Rank
+    </a>
+    <a href="/leagues/{{ lg }}/matches/new" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl {% if '/matches/new' in request.url.path %}text-blue-600 font-medium bg-blue-50/80{% else %}text-slate-500{% endif %}">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/></svg>
+      Match
+    </a>
+    {% else %}
+    <span class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 text-slate-300">—</span>
+    <span class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 text-slate-300">—</span>
+    {% endif %}
+    {% if user.is_admin %}
+    <a href="/admin" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl {% if request.url.path.startswith('/admin') %}text-blue-600 font-medium bg-blue-50/80{% else %}text-slate-500{% endif %}">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Admin
+    </a>
+    {% else %}
+    <span class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 text-slate-400 max-w-[4.5rem] truncate">{{ user.display_name }}</span>
+    {% endif %}
+  </nav>
+  {% endif %}
+</body>
+</html>

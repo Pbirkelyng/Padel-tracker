@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}New match{% endblock %}
+{% block content %}
+<p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-3">Schedule</p>
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-6">New match</h1>
+{% if error %}
+<div class="mb-5 p-4 rounded-2xl bg-red-50 border border-red-200/80 text-red-900 text-sm">{{ error }}</div>
+{% endif %}
+<form method="post" action="/leagues/{{ league_slug }}/matches" class="rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-8 space-y-8">
+  <div class="grid grid-cols-2 gap-5">
+    <label class="block text-sm font-medium text-slate-700">Date
+      <input type="date" name="scheduled_date" required class="mt-2 w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+    </label>
+    <label class="block text-sm font-medium text-slate-700">Time
+      <input type="time" name="scheduled_time" required class="mt-2 w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+    </label>
+  </div>
+  <label class="block text-sm font-medium text-slate-700">Location <span class="text-slate-400 font-normal">(optional)</span>
+    <input type="text" name="location" class="mt-2 w-full border border-slate-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500" placeholder="Court or venue">
+  </label>
+
+  <div>
+    <p class="text-sm font-medium text-slate-700 mb-3">Best of</p>
+    <div class="inline-flex rounded-2xl border border-slate-200 bg-slate-50/80 p-1 gap-1">
+      <label class="cursor-pointer"><input type="radio" name="best_of" value="3" class="peer sr-only" checked><span class="block px-5 py-2 rounded-xl text-sm font-medium text-slate-600 peer-checked:bg-white peer-checked:text-blue-700 peer-checked:shadow-[0_1px_3px_rgba(15,23,42,0.08)]">3</span></label>
+      <label class="cursor-pointer"><input type="radio" name="best_of" value="5" class="peer sr-only"><span class="block px-5 py-2 rounded-xl text-sm font-medium text-slate-600 peer-checked:bg-white peer-checked:text-blue-700 peer-checked:shadow-[0_1px_3px_rgba(15,23,42,0.08)]">5</span></label>
+      <label class="cursor-pointer"><input type="radio" name="best_of" value="7" class="peer sr-only"><span class="block px-5 py-2 rounded-xl text-sm font-medium text-slate-600 peer-checked:bg-white peer-checked:text-blue-700 peer-checked:shadow-[0_1px_3px_rgba(15,23,42,0.08)]">7</span></label>
+    </div>
+    <p class="text-xs text-slate-500 mt-3">Winner is first to win majority of sets (e.g. best of 3 = first to 2 sets).</p>
+  </div>
+
+  <fieldset>
+    <legend class="text-sm font-semibold text-slate-800 mb-3">Players <span class="font-normal text-slate-500">(up to 4)</span></legend>
+    <div class="space-y-2 max-h-60 overflow-y-auto rounded-2xl border border-slate-100">
+      {% for p, rating in roster %}
+      <label class="flex items-center gap-4 p-4 rounded-xl border border-transparent hover:bg-blue-50/40 hover:border-blue-100/60 cursor-pointer transition-colors">
+        <input type="checkbox" name="player_ids" value="{{ p.id }}" {% if p.id == user.id %}checked{% endif %} class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+        <span class="font-medium text-slate-900">{{ p.display_name }}</span>
+        <span class="text-xs text-slate-400 ml-auto tabular-nums">{{ rating|round(0)|int }} ELO</span>
+      </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <button type="submit" class="w-full py-3.5 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_20px_-10px_rgba(37,99,235,0.55)]">Create match</button>
+</form>
+<a href="/leagues/{{ league_slug }}/schedule" class="inline-flex items-center gap-2 mt-6 text-sm font-medium text-blue-600 hover:text-blue-700">← Schedule</a>
+{% endblock %}

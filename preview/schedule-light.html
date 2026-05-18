@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule — demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11','ss01'; }</style>
+</head>
+<body class="min-h-screen text-slate-900 pb-28 md:pb-10 antialiased bg-[radial-gradient(1200px_500px_at_50%_-200px,#dbeafe_0%,transparent_60%),linear-gradient(to_bottom,#f8fafc,#ffffff)]">
+  <header class="hidden md:block border-b border-slate-200/80 bg-white/90 backdrop-blur sticky top-0 z-40 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <nav class="max-w-4xl mx-auto px-4 py-3 flex gap-8 text-sm items-center text-slate-600">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-blue-600 mr-4">
+        <span class="h-2 w-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.2)]"></span>
+        Padel Tracker
+      </a>
+      <a href="leagues-dashboard.html" class="hover:text-blue-600">Leagues</a>
+      <span class="text-blue-600 font-semibold">Schedule</span>
+      <a href="leaderboard-light.html" class="hover:text-blue-600">Leaderboard</a>
+      <a href="members-light.html" class="hover:text-blue-600">Members</a>
+    </nav>
+  </header>
+  <main class="max-w-4xl mx-auto px-4 py-8 md:py-10">
+    <div class="flex justify-between mb-10 gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-2">Schedule</p>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900">Matches</h1>
+        <p class="text-sm text-slate-500 mt-2">Default League</p>
+      </div>
+      <a href="#" class="hidden md:inline-flex px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_16px_-10px_rgba(37,99,235,0.5)]">+ New match</a>
+    </div>
+    <h2 class="text-xs font-semibold text-blue-600 uppercase tracking-[0.12em] mb-4">Upcoming</h2>
+    <a href="match-light.html" class="group block rounded-3xl bg-white border border-slate-200/70 p-6 mb-4 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] hover:border-blue-300/70 transition-colors">
+      <div class="flex justify-between gap-4">
+        <div>
+          <p class="font-semibold text-lg text-slate-900 group-hover:text-blue-700">Sat 17 May 2026, 18:00</p>
+          <p class="text-sm text-slate-600 mt-2 flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5 text-blue-600/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Court 3
+          </p>
+          <p class="text-sm text-slate-500 mt-2">Maria, Sofia, Jonas, Lars</p>
+        </div>
+        <span class="text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-100/80 h-fit">Best of 3</span>
+      </div>
+    </a>
+    <section class="mt-12">
+      <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-4">Past</h2>
+      <a href="match-light.html" class="group block rounded-3xl bg-white/85 border border-slate-200/70 p-5 mb-16 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-blue-300/70 hover:shadow-[0_4px_28px_-16px_rgba(37,99,235,0.14)] transition-all">
+        <div class="flex justify-between gap-4 flex-wrap">
+          <div>
+            <p class="font-medium text-slate-900 group-hover:text-blue-700">Mon 05 May 2026, 19:30</p>
+            <p class="text-sm text-slate-500 mt-2">Maria, Sofia, Jonas, Lars</p>
+            <p class="text-sm text-blue-700 font-semibold mt-3">7-6, 6-2</p>
+          </div>
+          <span class="inline-flex self-start text-xs px-3 py-1 rounded-full bg-blue-50 border border-blue-100/70 text-blue-800 font-medium h-fit shrink-0">Team A won</span>
+        </div>
+      </a>
+    </section>
+  </main>
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200/80 bg-white/95 backdrop-blur-md flex justify-around items-center px-2 py-1.5 pb-[env(safe-area-inset-bottom,0)] shadow-[0_-4px_20px_-6px_rgba(15,23,42,0.08)]">
+    <a href="index.html" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-slate-500">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/></svg>
+      Leagues
+    </a>
+    <a href="schedule-light.html" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-blue-600 font-semibold bg-blue-50/80">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Schedule
+    </a>
+    <a href="leaderboard-light.html" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-slate-500">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21h14M12 17l-3 4h6l-3-4zm-4-4h10l2 3V4H5v13l3-3zm4-9h2v7H9V7zm6 4h2v3h-2v-3z"/></svg>
+      Rank
+    </a>
+    <a href="match-light.html" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-slate-500">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/></svg>
+      Match
+    </a>
+    <span class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 text-slate-500">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Admin
+    </span>
+  </nav>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto mt-16 px-4">
+  <h1 class="text-3xl font-bold text-slate-900 mb-2">Padel Tracker</h1>
+  <p class="text-slate-500 mb-8">Sign in to continue.</p>
+  {% if error == 'rejected' %}
+  <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">Account not approved.</div>
+  {% elif error %}
+  <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="/login" class="space-y-4 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+    {% if next_url %}<input type="hidden" name="next_hidden" value="{{ next_url }}">{% endif %}
+    <label class="block text-sm text-slate-600">Email
+      <input type="email" name="email" required autocomplete="username" class="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+    </label>
+    <label class="block text-sm text-slate-600">Password
+      <input type="password" name="password" required autocomplete="current-password" class="mt-1 w-full border border-slate-300 rounded-xl px-3 py-2">
+    </label>
+    <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700">Sign in</button>
+  </form>
+  <p class="mt-6 text-center text-slate-500 text-sm"><a href="/register" class="text-blue-600 font-medium">Create account</a></p>
+</div>
+{% endblock %}

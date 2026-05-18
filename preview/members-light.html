@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Members — demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11','ss01'; }</style>
+</head>
+<body class="min-h-screen text-slate-900 antialiased bg-[radial-gradient(1200px_500px_at_50%_-200px,#dbeafe_0%,transparent_60%),linear-gradient(to_bottom,#f8fafc,#ffffff)]">
+  <header class="hidden md:block border-b border-slate-200/80 bg-white/90 backdrop-blur sticky top-0 z-40 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <nav class="max-w-4xl mx-auto px-4 py-3 flex gap-8 text-sm items-center text-slate-600">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-blue-600 mr-2">
+        <span class="h-2 w-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.2)]"></span>
+        Padel Tracker
+      </a>
+      <a href="leagues-dashboard.html" class="hover:text-blue-600">Leagues</a>
+      <a href="schedule-light.html" class="hover:text-blue-600">Schedule</a>
+      <a href="leaderboard-light.html" class="hover:text-blue-600">Leaderboard</a>
+      <span class="text-blue-600 font-semibold">Members</span>
+    </nav>
+  </header>
+  <div class="max-w-xl mx-auto px-6 py-10">
+  <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-2">Default League</p>
+  <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-10">Members</h1>
+
+  <section class="rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.12)] p-7 mb-10">
+    <h2 class="text-lg font-semibold text-slate-900 mb-5">Invite links</h2>
+    <div class="flex gap-3 mb-5 flex-wrap">
+      <input type="text" placeholder="Optional email note" class="flex-1 min-w-[160px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+      <button type="button" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white shadow-[0_6px_14px_-8px_rgba(37,99,235,0.5)]">Generate</button>
+    </div>
+    <div class="text-xs bg-slate-50/90 border border-slate-100 p-4 rounded-2xl break-all leading-relaxed text-slate-700">
+      https://your-app.com/<strong class="text-blue-700">invite/abc-token</strong>
+      <button type="button" class="float-right ml-4 text-xs font-semibold text-blue-600 hover:text-blue-800">Copy</button>
+      <span class="block clear-both"></span>
+    </div>
+  </section>
+
+  <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-4">Roster</p>
+  <ul class="rounded-3xl bg-white border border-slate-200/70 divide-y divide-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden mb-12">
+    <li class="flex justify-between px-5 py-4 text-sm items-center"><span class="font-medium">Anders <span class="text-blue-700 text-xs font-semibold ml-1">admin</span></span><span class="text-slate-500 tabular-nums">1042</span></li>
+    <li class="flex justify-between px-5 py-4 text-sm items-center"><span class="font-medium">Maria</span><span class="text-slate-500 tabular-nums">1038</span></li>
+  </ul>
+  <a href="schedule-light.html" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800">← Schedule</a>
+  </div>
+</body>
+</html>

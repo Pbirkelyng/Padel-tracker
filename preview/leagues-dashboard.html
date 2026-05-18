@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leagues — demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: Inter, system-ui, sans-serif; font-feature-settings: 'cv11','ss01'; }</style>
+</head>
+<body class="min-h-screen text-slate-900 pb-28 md:pb-12 antialiased bg-[radial-gradient(1200px_500px_at_50%_-200px,#dbeafe_0%,transparent_60%),linear-gradient(to_bottom,#f8fafc,#ffffff)]">
+  <header class="hidden md:block border-b border-slate-200/80 bg-white/90 backdrop-blur sticky top-0 z-40 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+    <nav class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+      <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-blue-600">
+        <span class="h-2 w-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.2)]"></span>
+        Padel Tracker
+      </a>
+      <span class="text-sm text-slate-600">anders@example.com · <a href="#" class="font-medium text-blue-600 hover:text-blue-800">Logout</a></span>
+    </nav>
+  </header>
+  <main class="max-w-4xl mx-auto px-4 py-8 md:py-10">
+    <div class="rounded-3xl border border-slate-200/70 bg-white/80 backdrop-blur-sm shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.12)] p-8 mb-10">
+      <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-3">Home</p>
+      <div class="flex flex-wrap gap-6 justify-between items-start">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight text-slate-900">Your leagues</h1>
+          <p class="text-slate-500 mt-2 max-w-md">Pin favourites · rename/delete from Manage · open schedule</p>
+        </div>
+        <button type="button" class="shrink-0 px-6 py-2.5 rounded-xl font-semibold text-sm text-white bg-blue-600 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_16px_-10px_rgba(37,99,235,0.55)]">+ Add league</button>
+      </div>
+    </div>
+    <article class="rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.18)] hover:shadow-[0_4px_28px_-16px_rgba(37,99,235,0.22)] transition-shadow p-6 mb-5">
+      <div class="flex flex-wrap gap-6 justify-between">
+        <div class="flex gap-4 min-w-0">
+          <span class="h-11 w-11 shrink-0 rounded-full bg-blue-50 ring-2 ring-blue-100 flex items-center justify-center text-blue-600" title="Pinned">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>
+          </span>
+          <div>
+            <h2 class="text-xl font-semibold"><a href="schedule-light.html" class="hover:text-blue-600">Default League</a></h2>
+            <p class="text-sm text-slate-500 mt-3">42 matches · <code class="text-xs bg-slate-100 px-2 py-0.5 rounded-md">default</code></p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <a href="schedule-light.html" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.5)]">Open</a>
+          <details class="relative">
+            <summary class="list-none cursor-pointer px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50">Manage</summary>
+            <div class="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.18)] z-30 text-xs text-slate-500">
+              Dropdown mirrors live Manage panel.
+            </div>
+          </details>
+        </div>
+      </div>
+    </article>
+    <article class="rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6 mb-12">
+      <div class="flex flex-wrap gap-6 justify-between">
+        <div class="flex gap-4 min-w-0">
+          <span class="h-11 w-11 shrink-0 rounded-full flex items-center justify-center text-slate-400 border border-dashed border-slate-200" title="Pin">📍</span>
+          <div>
+            <h2 class="text-xl font-semibold text-slate-900">Showcase Sandbox</h2>
+            <p class="text-sm text-slate-500 mt-3">3 matches · <code class="text-xs bg-slate-100 px-2 py-0.5 rounded-md">sandbox</code></p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <span class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-400 cursor-not-allowed">Open</span>
+        </div>
+      </div>
+    </article>
+    <section>
+      <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-3">Discover</p>
+      <h3 class="text-lg font-semibold text-slate-900 mb-4">Public leagues</h3>
+      <div class="flex justify-between items-center gap-4 rounded-3xl bg-white border border-slate-200/70 px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <span class="font-medium">Copenhagen Casuals</span>
+        <span class="text-sm font-semibold text-blue-600">Request to join</span>
+      </div>
+    </section>
+  </main>
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-slate-200/80 bg-white/95 backdrop-blur-md flex justify-around items-center px-2 py-1.5 pb-[env(safe-area-inset-bottom,0)] shadow-[0_-4px_20px_-6px_rgba(15,23,42,0.08)]">
+    <a href="index.html" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-blue-600 font-medium bg-blue-50/80">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/></svg>
+      Leagues
+    </a>
+    <a href="schedule-light.html" class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-slate-500">
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Schedule
+    </a>
+    <span class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-slate-400">—</span>
+    <span class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 rounded-xl text-slate-400">—</span>
+    <span class="flex flex-col items-center gap-0.5 text-[10px] px-2 py-1 text-slate-500 max-w-[4rem] truncate">Admin</span>
+  </nav>
+</body>
+</html>

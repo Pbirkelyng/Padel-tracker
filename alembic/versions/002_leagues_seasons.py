@@ -98,42 +98,47 @@ def upgrade() -> None:
 
     bind = op.get_bind()
     first_uid = bind.execute(sa.text("SELECT id FROM users ORDER BY id ASC LIMIT 1")).scalar()
-    if first_uid is None:
-        first_uid = 1
 
-    league_id = bind.execute(
-        sa.text(
-            "INSERT INTO leagues (name, slug, description, is_public, created_by_id) "
-            "VALUES ('Default League', 'default', '', TRUE, :uid) RETURNING id"
-        ),
-        {"uid": first_uid},
-    ).scalar()
+    # Only seed a Default League if existing users are being migrated.
+    # On a fresh database (e.g. first production deploy) there are no users yet,
+    # so we skip seeding and let the first admin create their own leagues via the UI.
+    if first_uid is not None:
+        league_id = bind.execute(
+            sa.text(
+                "INSERT INTO leagues (name, slug, description, is_public, created_by_id) "
+                "VALUES ('Default League', 'default', '', TRUE, :uid) RETURNING id"
+            ),
+            {"uid": first_uid},
+        ).scalar()
 
-    season_id = bind.execute(
-        sa.text(
-            "INSERT INTO seasons (league_id, name, is_current) "
-            "VALUES (:lid, 'Season 1', TRUE) RETURNING id"
-        ),
-        {"lid": league_id},
-    ).scalar()
+        season_id = bind.execute(
+            sa.text(
+                "INSERT INTO seasons (league_id, name, is_current) "
+                "VALUES (:lid, 'Season 1', TRUE) RETURNING id"
+            ),
+            {"lid": league_id},
+        ).scalar()
 
-    bind.execute(
-        sa.text("UPDATE matches SET league_id = :lid, season_id = :sid WHERE league_id IS NULL"),
-        {"lid": league_id, "sid": season_id},
-    )
-
-    users_rows = bind.execute(
-        sa.text("SELECT id, rating, is_admin FROM users WHERE status = 'approved'")
-    ).fetchall()
-    for uid, rating, is_admin in users_rows:
-        role = "admin" if is_admin else "member"
         bind.execute(
             sa.text(
-                "INSERT INTO league_members (league_id, user_id, role, status, rating, is_pinned) "
-                "VALUES (:lid, :uid, :role, 'active', :rating, FALSE)"
+                "UPDATE matches SET league_id = :lid, season_id = :sid "
+                "WHERE league_id IS NULL"
             ),
-            {"lid": league_id, "uid": uid, "role": role, "rating": rating or 1000.0},
+            {"lid": league_id, "sid": season_id},
         )
+
+        users_rows = bind.execute(
+            sa.text("SELECT id, rating, is_admin FROM users WHERE status = 'approved'")
+        ).fetchall()
+        for uid, rating, is_admin in users_rows:
+            role = "admin" if is_admin else "member"
+            bind.execute(
+                sa.text(
+                    "INSERT INTO league_members (league_id, user_id, role, status, rating, is_pinned) "
+                    "VALUES (:lid, :uid, :role, 'active', :rating, FALSE)"
+                ),
+                {"lid": league_id, "uid": uid, "role": role, "rating": rating or 1000.0},
+            )
 
     with op.batch_alter_table("matches") as batch_op:
         batch_op.alter_column("league_id", existing_type=sa.Integer(), nullable=False)

@@ -101,22 +101,21 @@ def upgrade() -> None:
     if first_uid is None:
         first_uid = 1
 
-    bind.execute(
+    league_id = bind.execute(
         sa.text(
             "INSERT INTO leagues (name, slug, description, is_public, created_by_id) "
-            "VALUES ('Default League', 'default', '', 1, :uid)"
+            "VALUES ('Default League', 'default', '', TRUE, :uid) RETURNING id"
         ),
         {"uid": first_uid},
-    )
-    league_id = bind.execute(sa.text("SELECT last_insert_rowid()")).scalar()
+    ).scalar()
 
-    bind.execute(
+    season_id = bind.execute(
         sa.text(
-            "INSERT INTO seasons (league_id, name, is_current) VALUES (:lid, 'Season 1', 1)"
+            "INSERT INTO seasons (league_id, name, is_current) "
+            "VALUES (:lid, 'Season 1', TRUE) RETURNING id"
         ),
         {"lid": league_id},
-    )
-    season_id = bind.execute(sa.text("SELECT last_insert_rowid()")).scalar()
+    ).scalar()
 
     bind.execute(
         sa.text("UPDATE matches SET league_id = :lid, season_id = :sid WHERE league_id IS NULL"),
@@ -131,7 +130,7 @@ def upgrade() -> None:
         bind.execute(
             sa.text(
                 "INSERT INTO league_members (league_id, user_id, role, status, rating, is_pinned) "
-                "VALUES (:lid, :uid, :role, 'active', :rating, 0)"
+                "VALUES (:lid, :uid, :role, 'active', :rating, FALSE)"
             ),
             {"lid": league_id, "uid": uid, "role": role, "rating": rating or 1000.0},
         )

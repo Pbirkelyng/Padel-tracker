@@ -190,6 +190,15 @@ def link_placeholder_to_user(
     for m in db.scalars(select(Match).where(Match.created_by_id == placeholder.id)).all():
         m.created_by_id = real.id
 
+    # Push the FK reassignments to the DB, then drop the placeholder's ORM
+    # cache. Without this, the next db.delete(placeholder) would consult the
+    # stale in-memory placeholder.match_players / .league_memberships
+    # collections and try to "orphan" them by setting user_id = NULL — which
+    # violates the NOT NULL constraint on those FK columns. Expiring forces
+    # SQLAlchemy to lazy-load the (now empty) collections instead.
+    db.flush()
+    db.expire(placeholder)
+
     db.delete(placeholder)
     db.flush()
     return True

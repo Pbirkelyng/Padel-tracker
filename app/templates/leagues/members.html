@@ -6,7 +6,19 @@
 <h1 class="text-3xl font-bold tracking-tight text-slate-900">Members</h1>
 <p class="text-slate-500 text-sm mb-8 mt-2">Invite links · pending requests · roster</p>
 
-{% if invites and membership.role.value == 'admin' %}
+{% if is_admin %}
+<section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
+  <h2 class="text-lg font-semibold text-slate-900 mb-1">Add a player</h2>
+  <p class="text-xs text-slate-500 mb-4">Use this for friends who don't have an account yet. You can link them to a real account later.</p>
+  <form method="post" action="/leagues/{{ league.slug }}/members/placeholder" class="flex flex-wrap gap-3">
+    <input type="text" name="display_name" required placeholder="Name (e.g. Maria)" class="flex-1 min-w-[160px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+    <input type="email" name="email_hint" placeholder="Email (optional)" class="flex-1 min-w-[180px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Add player</button>
+  </form>
+</section>
+{% endif %}
+
+{% if invites and is_admin %}
 <section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
   <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite links</h2>
   <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3 mb-5">
@@ -24,7 +36,17 @@
 </section>
 {% endif %}
 
-{% if pending and membership.role.value == 'admin' %}
+{% if is_admin and not invites %}
+<section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04)] p-6 md:p-7">
+  <h2 class="text-lg font-semibold text-slate-900 mb-4">Invite links</h2>
+  <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3">
+    <input type="text" name="email_hint" placeholder="Email note (optional)" class="flex-1 min-w-[200px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Generate link</button>
+  </form>
+</section>
+{% endif %}
+
+{% if pending and is_admin %}
 <section class="mb-8">
   <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-3">Pending</h2>
   <ul class="space-y-3">
@@ -45,9 +67,56 @@
   <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-4">Active members</h2>
   <ul class="rounded-3xl bg-white border border-slate-200/70 divide-y divide-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
     {% for m in members %}
-    <li class="px-5 py-4 flex justify-between text-sm items-center">
-      <span class="font-medium text-slate-900">{{ m.user.display_name }}{% if m.role.value == 'admin' %} <span class="text-blue-600 text-xs font-semibold ml-1">admin</span>{% endif %}</span>
-      <span class="text-slate-500 tabular-nums">{{ m.rating|round(0)|int }} ELO</span>
+    <li class="px-5 py-4 text-sm">
+      <div class="flex justify-between items-center gap-3">
+        <span class="font-medium text-slate-900">
+          {{ m.user.display_name }}
+          {% if m.role.value == 'admin' %}<span class="text-blue-600 text-xs font-semibold ml-1">admin</span>{% endif %}
+          {% if m.user.is_placeholder %}<span class="ml-1 inline-block text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">placeholder</span>{% endif %}
+          {% if m.user.is_placeholder and m.user.placeholder_email_hint %}<span class="text-slate-400 font-normal text-xs ml-2">{{ m.user.placeholder_email_hint }}</span>{% endif %}
+        </span>
+        <span class="flex items-center gap-3">
+          <span class="text-slate-500 tabular-nums">{{ m.rating|round(0)|int }} ELO</span>
+          {% if is_admin and m.user.is_placeholder %}
+          <button type="button" onclick="document.getElementById('ph-actions-{{ m.user.id }}').classList.toggle('hidden')" class="text-blue-600 text-xs font-semibold hover:text-blue-800">Manage</button>
+          {% endif %}
+        </span>
+      </div>
+
+      {% if is_admin and m.user.is_placeholder %}
+      <div id="ph-actions-{{ m.user.id }}" class="hidden mt-4 space-y-4 bg-slate-50/70 rounded-2xl p-4 border border-slate-100">
+        <details class="group">
+          <summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-slate-600 hover:text-slate-900">Edit name &amp; email</summary>
+          <form method="post" action="/leagues/{{ league.slug }}/members/{{ m.user.id }}/edit-placeholder" class="flex flex-wrap gap-2 mt-3">
+            <input type="text" name="display_name" value="{{ m.user.display_name }}" required class="flex-1 min-w-[140px] border border-slate-200 rounded-lg px-3 py-2 text-sm">
+            <input type="email" name="email_hint" value="{{ m.user.placeholder_email_hint or '' }}" placeholder="Email (optional)" class="flex-1 min-w-[160px] border border-slate-200 rounded-lg px-3 py-2 text-sm">
+            <button type="submit" class="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700">Save</button>
+          </form>
+        </details>
+
+        {% if link_candidates %}
+        <details class="group">
+          <summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-slate-600 hover:text-slate-900">Link to registered user</summary>
+          <p class="text-xs text-slate-500 mt-2 mb-2">This merges all matches and ELO from this placeholder into the selected registered user, then removes the placeholder.</p>
+          <form method="post" action="/leagues/{{ league.slug }}/members/{{ m.user.id }}/link" class="flex flex-wrap gap-2">
+            <select name="real_user_id" required class="flex-1 min-w-[200px] border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="" disabled selected>Pick a registered user…</option>
+              {% for cand in link_candidates %}
+              <option value="{{ cand.id }}">{{ cand.display_name }} ({{ cand.email }})</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700">Link</button>
+          </form>
+        </details>
+        {% else %}
+        <p class="text-xs text-slate-500">No registered users available to link to. Once someone signs up and is approved, they'll appear here.</p>
+        {% endif %}
+
+        <form method="post" action="/leagues/{{ league.slug }}/members/{{ m.user.id }}/delete-placeholder" onsubmit="return confirm('Remove this placeholder? Their match history will be deleted.');">
+          <button type="submit" class="text-xs font-semibold text-rose-600 hover:text-rose-700">Remove placeholder</button>
+        </form>
+      </div>
+      {% endif %}
     </li>
     {% endfor %}
   </ul>

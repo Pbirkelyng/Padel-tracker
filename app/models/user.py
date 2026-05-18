@@ -24,6 +24,8 @@ class User(Base):
         Enum(UserStatus), default=UserStatus.pending, index=True
     )
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_placeholder: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    placeholder_email_hint: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     match_players: Mapped[list["MatchPlayer"]] = relationship(back_populates="user")

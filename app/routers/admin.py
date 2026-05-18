@@ -14,11 +14,13 @@ router = APIRouter(tags=["admin"], prefix="/admin")
 @router.get("", response_class=HTMLResponse)
 def admin_page(request: Request, user: AdminUser, db: Session = Depends(get_db)):
     pending = db.scalars(
-        select(User).where(User.status == UserStatus.pending).order_by(User.created_at)
+        select(User)
+        .where(User.status == UserStatus.pending, User.is_placeholder.is_(False))
+        .order_by(User.created_at)
     ).all()
     approved = db.scalars(
         select(User)
-        .where(User.status == UserStatus.approved)
+        .where(User.status == UserStatus.approved, User.is_placeholder.is_(False))
         .order_by(User.display_name)
     ).all()
     return templates.TemplateResponse(

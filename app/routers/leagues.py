@@ -9,9 +9,11 @@ from sqlalchemy.orm import Session, joinedload
 from app.db import get_db
 from app.deps import AdminUser, ApprovedUser
 from app.league_helpers import (
+    create_placeholder_member,
     get_active_membership,
     get_league_by_slug,
     is_league_admin,
+    link_placeholder_to_user,
     match_count_by_league,
     memberships_for_home,
     next_league_slug,
@@ -25,6 +27,8 @@ from app.models import (
     LeagueMemberRole,
     LeagueMemberStatus,
     Season,
+    User,
+    UserStatus,
 )
 from app.templating import templates
 from app.utils.slug import slugify
@@ -240,12 +244,26 @@ def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = 
     ).all()
 
     invites = []
+    link_candidates: list[User] = []
     if admin:
         invites = db.scalars(
             select(LeagueInvite).where(
                 LeagueInvite.league_id == league.id,
                 LeagueInvite.accepted_at.is_(None),
             ).order_by(LeagueInvite.created_at.desc()).limit(20)
+        ).all()
+
+        # Registered users not already in this league — candidates that an
+        # admin can link a placeholder to.
+        member_user_ids = {m.user_id for m in active_members}
+        link_candidates = db.scalars(
+            select(User)
+            .where(
+                User.is_placeholder.is_(False),
+                User.status == UserStatus.approved,
+                ~User.id.in_(member_user_ids) if member_user_ids else User.id.is_not(None),
+            )
+            .order_by(User.display_name)
         ).all()
 
     return templates.TemplateResponse(
@@ -259,8 +277,121 @@ def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = 
             "pending": pend,
             "members": active_members,
             "invites": invites,
+            "link_candidates": link_candidates,
+            "is_admin": admin,
         },
     )
+
+
+@router.post("/leagues/{slug}/members/placeholder")
+def add_placeholder_member(
+    slug: str,
+    actor: ApprovedUser,
+    db: Session = Depends(get_db),
+    display_name: str = Form(...),
+    email_hint: str = Form(""),
+):
+    league = get_league_by_slug(db, slug)
+    if not league:
+        return RedirectResponse("/", status_code=303)
+    me = require_membership(db, league, actor.id)
+    if not is_league_admin(me):
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+    name = display_name.strip()[:100]
+    if len(name) < 1:
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+    create_placeholder_member(db, league.id, name, email_hint)
+    db.commit()
+    return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+
+@router.post("/leagues/{slug}/members/{user_id}/edit-placeholder")
+def edit_placeholder_member(
+    slug: str,
+    user_id: int,
+    actor: ApprovedUser,
+    db: Session = Depends(get_db),
+    display_name: str = Form(...),
+    email_hint: str = Form(""),
+):
+    league = get_league_by_slug(db, slug)
+    if not league:
+        return RedirectResponse("/", status_code=303)
+    me = require_membership(db, league, actor.id)
+    if not is_league_admin(me):
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+    target = db.get(User, user_id)
+    if not target or not target.is_placeholder:
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+    # Make sure the placeholder belongs to this league before mutating.
+    if not get_active_membership(db, league.id, user_id):
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+    name = display_name.strip()[:100]
+    if name:
+        target.display_name = name
+    hint = email_hint.strip()[:255]
+    target.placeholder_email_hint = hint or None
+    db.commit()
+    return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+
+@router.post("/leagues/{slug}/members/{user_id}/delete-placeholder")
+def delete_placeholder_member(
+    slug: str,
+    user_id: int,
+    actor: ApprovedUser,
+    db: Session = Depends(get_db),
+):
+    league = get_league_by_slug(db, slug)
+    if not league:
+        return RedirectResponse("/", status_code=303)
+    me = require_membership(db, league, actor.id)
+    if not is_league_admin(me):
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+    target = db.get(User, user_id)
+    if not target or not target.is_placeholder:
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+    # Delete the placeholder entirely (cascades remove its memberships and
+    # match-player rows via ON DELETE behaviour — but match_players doesn't
+    # cascade on user, so we clean it up explicitly to avoid orphan FKs).
+    from app.models import MatchPlayer
+
+    for mp in db.scalars(select(MatchPlayer).where(MatchPlayer.user_id == target.id)).all():
+        db.delete(mp)
+    for lm in db.scalars(select(LeagueMember).where(LeagueMember.user_id == target.id)).all():
+        db.delete(lm)
+    db.delete(target)
+    db.commit()
+    return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+
+@router.post("/leagues/{slug}/members/{user_id}/link")
+def link_placeholder_member(
+    slug: str,
+    user_id: int,
+    actor: ApprovedUser,
+    db: Session = Depends(get_db),
+    real_user_id: int = Form(...),
+):
+    league = get_league_by_slug(db, slug)
+    if not league:
+        return RedirectResponse("/", status_code=303)
+    me = require_membership(db, league, actor.id)
+    if not is_league_admin(me):
+        return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+
+    ok = link_placeholder_to_user(db, user_id, real_user_id)
+    if ok:
+        db.commit()
+    else:
+        db.rollback()
+    return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
 
 
 @router.post("/leagues/{slug}/invites")

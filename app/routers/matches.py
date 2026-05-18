@@ -8,7 +8,15 @@ from sqlalchemy.orm import Session, selectinload
 from app.db import get_db
 from app.deps import ApprovedUser
 from app.league_helpers import get_active_membership, is_league_admin
-from app.models import LeagueMember, Match, MatchPlayer, MatchStatus, SetScore
+from app.models import (
+    LeagueMember,
+    LeagueMemberStatus,
+    Match,
+    MatchPlayer,
+    MatchStatus,
+    SetScore,
+    UserStatus,
+)
 from app.services.elo import apply_elo_for_match, compute_elo_delta, reverse_elo_for_match
 from app.services.scoring import (
     VALID_SET_SCORES,
@@ -86,6 +94,28 @@ def match_detail(
         )
         player_ratings[mp.user_id] = lm.rating if lm else 1000.0
 
+    # League members not already on the match — admins/creators can add them
+    # while the match is still scheduled.
+    addable_members: list[LeagueMember] = []
+    if can_manage and len(match.players) < 4:
+        existing_ids = {p.user_id for p in match.players}
+        addable_members = list(
+            db.scalars(
+                select(LeagueMember)
+                .where(
+                    LeagueMember.league_id == match.league_id,
+                    LeagueMember.status == LeagueMemberStatus.active,
+                )
+                .options(selectinload(LeagueMember.user))
+                .order_by(LeagueMember.joined_at)
+            ).all()
+        )
+        addable_members = [
+            m
+            for m in addable_members
+            if m.user_id not in existing_ids and m.user.status == UserStatus.approved
+        ]
+
     return templates.TemplateResponse(
         request,
         "matches/detail.html",
@@ -102,11 +132,86 @@ def match_detail(
             "can_reopen_completed": can_reopen_completed,
             "can_manage_teams": match.status == MatchStatus.scheduled,
             "can_manage_scores": match.status == MatchStatus.scheduled and can_manage,
+            "can_manage_roster": can_manage,
             "player_ratings": player_ratings,
+            "addable_members": addable_members,
             "sets_needed": sets_needed,
             "valid_set_pairs_json": valid_set_pairs_json,
         },
     )
+
+
+@router.post("/matches/{match_id}/players")
+def add_player_to_match(
+    match_id: int,
+    user: ApprovedUser,
+    db: Session = Depends(get_db),
+    player_id: int = Form(...),
+):
+    match = _load_match(db, match_id)
+    if not match:
+        return RedirectResponse("/", status_code=303)
+    mem = _league_membership_for_user(db, match.league_id, user.id)
+    if not mem or match.status != MatchStatus.scheduled:
+        return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+    is_creator_or_admin = (
+        user.is_admin or match.created_by_id == user.id or is_league_admin(mem)
+    )
+    if not is_creator_or_admin:
+        return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+    if len(match.players) >= 4:
+        return RedirectResponse(
+            f"/matches/{match_id}?error=Maximum+4+players+per+match",
+            status_code=303,
+        )
+
+    # Validate the candidate is an active member of this league.
+    target_membership = get_active_membership(db, match.league_id, player_id)
+    if not target_membership:
+        return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+    if any(p.user_id == player_id for p in match.players):
+        return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+    db.add(MatchPlayer(match_id=match.id, user_id=player_id, team=None))
+    db.commit()
+    return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+
+@router.post("/matches/{match_id}/players/{player_id}/remove")
+def remove_player_from_match(
+    match_id: int,
+    player_id: int,
+    user: ApprovedUser,
+    db: Session = Depends(get_db),
+):
+    match = _load_match(db, match_id)
+    if not match:
+        return RedirectResponse("/", status_code=303)
+    mem = _league_membership_for_user(db, match.league_id, user.id)
+    if not mem or match.status != MatchStatus.scheduled:
+        return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+    is_creator_or_admin = (
+        user.is_admin or match.created_by_id == user.id or is_league_admin(mem)
+    )
+    if not is_creator_or_admin:
+        return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+    # Never let the match end up with zero players (re-create one instead).
+    if len(match.players) <= 1:
+        return RedirectResponse(
+            f"/matches/{match_id}?error=A+match+needs+at+least+one+player",
+            status_code=303,
+        )
+
+    mp = next((p for p in match.players if p.user_id == player_id), None)
+    if mp:
+        db.delete(mp)
+        db.commit()
+    return RedirectResponse(f"/matches/{match_id}", status_code=303)
 @router.post("/matches/{match_id}/teams/{player_id}")
 def assign_single_team(
     match_id: int,

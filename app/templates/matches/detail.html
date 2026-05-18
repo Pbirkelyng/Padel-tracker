@@ -79,9 +79,12 @@
     <div class="mt-8 space-y-3">
       <p class="text-sm font-medium text-slate-700">Assign sides <span class="font-normal text-slate-500">(any league member until the match is finalized)</span></p>
       {% for p in match.players %}
-      <div class="flex items-center justify-between bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
-        <span class="font-medium text-slate-900">{{ p.user.display_name }}</span>
-        <div class="flex gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 rounded-2xl p-4 border border-slate-100">
+        <span class="font-medium text-slate-900">
+          {{ p.user.display_name }}
+          {% if p.user.is_placeholder %}<span class="ml-1 inline-block text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">placeholder</span>{% endif %}
+        </span>
+        <div class="flex flex-wrap gap-2 items-center">
           <form method="post" action="/matches/{{ match.id }}/teams/{{ p.user_id }}">
             <input type="hidden" name="team" value="A">
             <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-xl {% if p.team == 'A' %}bg-blue-600 text-white shadow-[0_4px_12px_-6px_rgba(37,99,235,0.6)]{% else %}bg-white border border-slate-200 text-slate-700{% endif %}">A</button>
@@ -94,10 +97,32 @@
             <input type="hidden" name="team" value="NONE">
             <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-xl bg-white border border-slate-200 text-slate-500">—</button>
           </form>
+          {% if can_manage_roster %}
+          <form method="post" action="/matches/{{ match.id }}/players/{{ p.user_id }}/remove" onsubmit="return confirm('Remove {{ p.user.display_name }} from this match?');">
+            <button type="submit" title="Remove from match" class="px-3 py-2 text-xs font-semibold rounded-xl text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100">✕</button>
+          </form>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
     </div>
+
+    {% if can_manage_roster and addable_members %}
+    <div class="mt-6 rounded-2xl bg-blue-50/50 border border-blue-100 p-5">
+      <p class="text-sm font-medium text-slate-700 mb-3">Add a player <span class="font-normal text-slate-500">({{ match.players|length }}/4)</span></p>
+      <form method="post" action="/matches/{{ match.id }}/players" class="flex flex-wrap gap-2">
+        <select name="player_id" required class="flex-1 min-w-[200px] bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
+          <option value="" disabled selected>Pick a league member…</option>
+          {% for m in addable_members %}
+          <option value="{{ m.user_id }}">{{ m.user.display_name }}{% if m.user.is_placeholder %} (placeholder){% endif %}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Add</button>
+      </form>
+    </div>
+    {% elif can_manage_roster and match.players|length >= 4 %}
+    <p class="mt-6 text-xs text-slate-500">Roster is full (4 players). Remove a player above to swap.</p>
+    {% endif %}
     {% endif %}
   </section>
 

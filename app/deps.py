@@ -28,6 +28,7 @@ def get_current_user(
 ) -> User:
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
 
 
 def require_approved(user: Annotated[User, Depends(get_current_user)]) -> User:

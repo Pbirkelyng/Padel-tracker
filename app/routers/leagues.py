@@ -253,15 +253,15 @@ def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = 
             ).order_by(LeagueInvite.created_at.desc()).limit(20)
         ).all()
 
-        # Registered users not already in this league — candidates that an
-        # admin can link a placeholder to.
-        member_user_ids = {m.user_id for m in active_members}
+        # Real (non-placeholder) approved users an admin can merge a
+        # placeholder into. We intentionally include users already in the
+        # league (active or pending join request): merging is the way to
+        # collapse "Placeholder Thomas" + "Real Thomas" into one record.
         link_candidates = db.scalars(
             select(User)
             .where(
                 User.is_placeholder.is_(False),
                 User.status == UserStatus.approved,
-                ~User.id.in_(member_user_ids) if member_user_ids else User.id.is_not(None),
             )
             .order_by(User.display_name)
         ).all()

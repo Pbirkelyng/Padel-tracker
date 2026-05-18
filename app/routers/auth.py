@@ -109,19 +109,19 @@ def register(
 
     settings = get_settings()
     is_admin_email = email == settings.admin_email.lower().strip()
+    # Anyone can sign up; gatekeeping happens per-league (join requests / invites).
     user = User(
         email=email,
         password_hash=hash_password(password),
         display_name=display_name or email.split("@")[0],
-        status=UserStatus.approved if is_admin_email else UserStatus.pending,
+        status=UserStatus.approved,
         is_admin=is_admin_email,
     )
     db.add(user)
     db.commit()
 
     token = create_session_token(user.id)
-    redirect_to = "/" if is_admin_email else "/pending"
-    redirect = RedirectResponse(redirect_to, status_code=303)
+    redirect = RedirectResponse("/", status_code=303)
     redirect.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax", max_age=30 * 86400)
     return redirect
 

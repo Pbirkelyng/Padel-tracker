@@ -145,9 +145,11 @@ def link_placeholder_to_user(
     if placeholder.id == real.id:
         return False
 
-    # League memberships: handle the case where the real user is already a
-    # member of one of the placeholder's leagues. In that case we keep the
-    # existing membership and drop the placeholder's duplicate.
+    # League memberships: if the real user already has a row in this league
+    # (active member, or a pending join request), inherit the placeholder's
+    # active status and accumulated rating onto that row and drop the
+    # placeholder's. Otherwise, just reassign the placeholder's membership
+    # to the real user.
     placeholder_memberships = db.scalars(
         select(LeagueMember).where(LeagueMember.user_id == placeholder.id)
     ).all()
@@ -159,6 +161,10 @@ def link_placeholder_to_user(
             )
         )
         if existing:
+            existing.status = LeagueMemberStatus.active
+            existing.rating = pm.rating
+            # Keep existing.role and existing.is_pinned — the real user's
+            # own choices for this league shouldn't be overwritten.
             db.delete(pm)
         else:
             pm.user_id = real.id

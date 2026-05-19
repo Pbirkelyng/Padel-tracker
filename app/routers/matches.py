@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -371,6 +372,42 @@ def save_scores(
         )
 
     return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+
+@router.post("/matches/{match_id}/details")
+def update_match_details(
+    match_id: int,
+    user: ApprovedUser,
+    db: Session = Depends(get_db),
+    scheduled_date: str = Form(...),
+    scheduled_time: str = Form(...),
+    location: str = Form(""),
+):
+    match = _load_match(db, match_id)
+    if not match or match.status != MatchStatus.scheduled:
+        return RedirectResponse("/", status_code=303)
+
+    mem = _league_membership_for_user(db, match.league_id, user.id)
+    if not mem:
+        return RedirectResponse("/", status_code=303)
+    if not (user.is_admin or match.created_by_id == user.id or is_league_admin(mem)):
+        return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+    try:
+        scheduled_at = datetime.strptime(f"{scheduled_date} {scheduled_time}", "%Y-%m-%d %H:%M")
+    except ValueError:
+        return RedirectResponse(
+            f"/matches/{match_id}?error=Invalid+date+or+time",
+            status_code=303,
+        )
+
+    match.scheduled_at = scheduled_at
+    match.location = location.strip() or None
+    db.commit()
+    return RedirectResponse(
+        f"/matches/{match_id}?success=Match+details+updated",
+        status_code=303,
+    )
 
 
 @router.post("/matches/{match_id}/best_of")

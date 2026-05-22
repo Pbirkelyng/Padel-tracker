@@ -1,4 +1,18 @@
-"""Doubles ELO — ratings stored on LeagueMember."""
+"""Doubles ELO — ratings stored on LeagueMember.
+
+New formula (margin-aware):
+    S_a   = 1.0 (win) | 0.0 (loss) | 0.5 (draw)
+    E_a   = 1 / (1 + 10^((R_b - R_a) / 400))    standard expected score
+    mult  = log(1 + |net_games|)                  margin multiplier
+    delta = K * mult * (S_a - E_a)
+
+net_games is the absolute total of (team_a_games - team_b_games) across all
+sets, viewed from team A's side.  For a 6-0, 6-0 win by A: net = +12,
+mult ≈ ln(13) ≈ 2.56.  For a 3-3 single set the multiplier is 0 and no
+ratings change.
+"""
+
+import math
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -31,7 +45,22 @@ def _league_members_for_team(db: Session, match: Match, team: str) -> list[Leagu
     )
 
 
+def margin_multiplier(game_diff: int) -> float:
+    """log(1 + |game_diff|) — scales ELO change with the margin of victory."""
+    return math.log(1 + abs(game_diff))
+
+
+def _net_games_a(match: Match) -> int:
+    """Net game difference from team A's perspective, across all set scores."""
+    return sum(s.team_a_games - s.team_b_games for s in match.set_scores)
+
+
 def compute_elo_delta(db: Session, match: Match, winner: str) -> float:
+    """Compute the ELO delta for team A (positive = team A gains).
+
+    winner must be 'A', 'B', or 'DRAW'.
+    The delta is stored in match.elo_delta and later reversed if needed.
+    """
     settings = get_settings()
     k = settings.elo_k
     team_a = _league_members_for_team(db, match, "A")
@@ -39,8 +68,17 @@ def compute_elo_delta(db: Session, match: Match, winner: str) -> float:
     r_a = _team_rating(team_a)
     r_b = _team_rating(team_b)
     e_a = _expected_score(r_a, r_b)
-    s_a = 1.0 if winner == "A" else 0.0
-    return k * (s_a - e_a)
+
+    if winner == "A":
+        s_a = 1.0
+    elif winner == "B":
+        s_a = 0.0
+    else:  # DRAW
+        s_a = 0.5
+
+    net = _net_games_a(match)
+    mult = margin_multiplier(net)
+    return k * mult * (s_a - e_a)
 
 
 def apply_elo_for_match(db: Session, match: Match, winner: str) -> dict[int, float]:

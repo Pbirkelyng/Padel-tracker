@@ -58,11 +58,17 @@
         {% endif %}
         <span class="text-slate-400 hidden sm:inline">·</span>
         <span class="rounded-full px-3 py-0.5 text-xs font-medium border {% if match.status.value == 'completed' %}border-emerald-200 bg-emerald-50 text-emerald-900{% elif match.status.value == 'scheduled' %}border-blue-100 bg-blue-50 text-blue-800{% else %}border-slate-200 bg-slate-50 text-slate-700{% endif %}">{{ match.status.value|capitalize }}</span>
+        {% if match.ended_early %}<span class="rounded-full px-3 py-0.5 text-xs font-medium border border-amber-200 bg-amber-50 text-amber-800">Ended early</span>{% endif %}
       </div>
     </div>
     {% if match.status.value == 'completed' %}
     <div class="rounded-2xl px-5 py-4 bg-blue-50/90 border border-blue-100 md:max-w-xs">
+      {% if match.winner_team %}
       <p class="font-semibold text-blue-900">Team {{ match.winner_team }} won</p>
+      {% else %}
+      <p class="font-semibold text-blue-900">Draw</p>
+      {% endif %}
+      {% if match.ended_early %}<p class="text-xs font-medium text-amber-700 mt-1">Ended before full time</p>{% endif %}
       <p class="text-xs text-slate-600 mt-2">Score locked. Only league or site admins can reopen this match.</p>
       {% if can_reopen_completed %}
       <form action="/matches/{{ match.id }}/reopen" method="post" class="mt-4">
@@ -192,18 +198,27 @@
         {% endif %}
       </div>
 
-      {% if can_manage_scores %}
-      <div class="flex flex-wrap gap-3 mt-8">
+      {% if can_manage_scores or can_finalize_early %}
+      <div class="flex flex-wrap gap-3 mt-8 items-center">
+        {% if can_manage_scores %}
         <button type="submit" name="action" value="save" class="px-5 py-2.5 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-800 hover:bg-slate-50">Save draft</button>
-        <button type="submit" name="action" value="finalize" class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_18px_-10px_rgba(37,99,235,0.55)]">Finalize</button>
+        <button type="submit" name="action" value="finalize" id="btn-finalize" class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_18px_-10px_rgba(37,99,235,0.55)]">Finalize</button>
+        {% endif %}
+        {% if can_finalize_early %}
+        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-sm text-slate-700 ml-2">
+          <input type="checkbox" name="ended_early" id="ended-early-cb" value="on" class="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400">
+          Ended before full time
+        </label>
+        <button type="submit" name="action" value="finalize" id="btn-finalize-early" class="hidden px-6 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_8px_18px_-10px_rgba(245,158,11,0.55)]">Finalize early</button>
+        {% endif %}
       </div>
       {% endif %}
     </form>
-    <p class="text-xs text-slate-400 mt-4 leading-relaxed">Valid sets include 6-0 … 6-4, 7-5, 7-6 (tiebreak scored for the winner at 7-6).</p>
+    <p class="text-xs text-slate-400 mt-4 leading-relaxed" id="score-hint">Valid sets include 6-0 … 6-4, 7-5, 7-6 (tiebreak scored for the winner at 7-6).</p>
   </section>
 </div>
 
-{% if can_manage_scores %}
+{% if can_manage_scores or can_finalize_early %}
 <script>
 (function () {
   var container = document.getElementById('sets-container');
@@ -218,6 +233,15 @@
       return hi + '-' + lo;
     })
   );
+
+  var cb = document.getElementById('ended-early-cb');
+  var btnFinalize = document.getElementById('btn-finalize');
+  var btnFinalizeEarly = document.getElementById('btn-finalize-early');
+  var hintEl = document.getElementById('score-hint');
+
+  function isEarlyMode() {
+    return cb && cb.checked;
+  }
 
   function numVal(inp) {
     if (!inp || inp.value === '' || inp.value === null) return 0;
@@ -256,18 +280,26 @@
     return [].slice.call(container.querySelectorAll('.set-row'));
   }
 
-  function createRow(aGames, bGames, aTb, bTb) {
+  function createRow(aGames, bGames, aTb, bTb, earlyMode) {
     var row = document.createElement('div');
     row.className = 'set-row flex flex-wrap items-center gap-x-3 gap-y-2 bg-slate-50/40 p-5 rounded-2xl border border-slate-100';
+    var maxAttr = earlyMode ? '' : ' max="7"';
     row.innerHTML =
       '<span class="text-sm font-medium text-slate-600 w-14 set-label">Set —</span>' +
       '<input type="hidden" name="set_numbers" value="1">' +
-      '<input type="number" name="team_a_games" value="' + String(aGames) + '" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
+      '<input type="number" name="team_a_games" value="' + String(aGames) + '" min="0"' + maxAttr + ' class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
       '<span class="text-slate-400 font-light">—</span>' +
-      '<input type="number" name="team_b_games" value="' + String(bGames) + '" min="0" max="7" class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
-      '<span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TB</span>' +
-      '<input type="text" name="team_a_tb" value="' + (aTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">' +
-      '<input type="text" name="team_b_tb" value="' + (bTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">';
+      '<input type="number" name="team_b_games" value="' + String(bGames) + '" min="0"' + maxAttr + ' class="w-14 px-2 py-2 border border-slate-200 rounded-xl text-center font-medium">' +
+      (earlyMode ? '' :
+        '<span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TB</span>' +
+        '<input type="text" name="team_a_tb" value="' + (aTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">' +
+        '<input type="text" name="team_b_tb" value="' + (bTb || '') + '" class="w-12 px-2 py-2 border border-slate-200 rounded-xl text-center text-sm" placeholder="">') +
+      (earlyMode ? '<button type="button" class="remove-set-btn ml-2 text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50">Remove</button>' : '');
+    if (earlyMode) {
+      row.querySelector('.remove-set-btn').addEventListener('click', function () {
+        if (getRows().length > 1) { row.remove(); renumber(); }
+      });
+    }
     return row;
   }
 
@@ -302,6 +334,7 @@
   }
 
   function syncRows() {
+    if (isEarlyMode()) return;
     var rows = getRows();
     if (!rows.length) return;
     var target = computeTarget(rows);
@@ -310,10 +343,52 @@
       rows.pop();
     }
     while (rows.length < target) {
-      container.appendChild(createRow(0, 0, '', ''));
+      container.appendChild(createRow(0, 0, '', '', false));
       rows = getRows();
     }
     renumber();
+  }
+
+  function applyEarlyMode(on) {
+    var rows = getRows();
+    if (on) {
+      // Rebuild rows without TB fields and with Remove buttons; keep existing scores
+      rows.forEach(function (row) {
+        var a = numVal(row.querySelector('[name="team_a_games"]'));
+        var b = numVal(row.querySelector('[name="team_b_games"]'));
+        var newRow = createRow(a, b, '', '', true);
+        row.parentNode.replaceChild(newRow, row);
+      });
+      // Show Add Set button, hide TB hint
+      var addBtn = document.getElementById('add-set-btn');
+      if (addBtn) addBtn.classList.remove('hidden');
+      if (hintEl) hintEl.classList.add('hidden');
+      if (btnFinalize) btnFinalize.classList.add('hidden');
+      if (btnFinalizeEarly) btnFinalizeEarly.classList.remove('hidden');
+    } else {
+      // Rebuild rows with TB fields and without Remove buttons
+      rows = getRows();
+      rows.forEach(function (row) {
+        var a = numVal(row.querySelector('[name="team_a_games"]'));
+        var b = numVal(row.querySelector('[name="team_b_games"]'));
+        var newRow = createRow(a, b, '', '', false);
+        row.parentNode.replaceChild(newRow, row);
+      });
+      var addBtn = document.getElementById('add-set-btn');
+      if (addBtn) addBtn.classList.add('hidden');
+      if (hintEl) hintEl.classList.remove('hidden');
+      if (btnFinalize) btnFinalize.classList.remove('hidden');
+      if (btnFinalizeEarly) btnFinalizeEarly.classList.add('hidden');
+      renumber();
+      syncRows();
+    }
+    renumber();
+  }
+
+  if (cb) {
+    cb.addEventListener('change', function () {
+      applyEarlyMode(cb.checked);
+    });
   }
 
   container.addEventListener('input', function () {
@@ -321,6 +396,18 @@
   });
 
   syncRows();
+
+  // Inject "Add set" button below the sets container (only shown in early mode)
+  var addSetBtn = document.createElement('button');
+  addSetBtn.type = 'button';
+  addSetBtn.id = 'add-set-btn';
+  addSetBtn.className = 'hidden mt-3 text-sm font-semibold text-blue-600 hover:text-blue-800';
+  addSetBtn.textContent = '+ Add set';
+  addSetBtn.addEventListener('click', function () {
+    container.appendChild(createRow(0, 0, '', '', true));
+    renumber();
+  });
+  container.parentNode.insertBefore(addSetBtn, container.nextSibling);
 
 })();
 </script>

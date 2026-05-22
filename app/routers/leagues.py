@@ -19,6 +19,7 @@ from app.league_helpers import (
     next_league_slug,
     pending_counts_by_admin_league,
     pending_join_count_for_admin,
+    pending_memberships_for_home,
     require_membership,
 )
 from app.models import (
@@ -41,9 +42,12 @@ router = APIRouter(tags=["leagues"])
 def frontpage(request: Request, user: ApprovedUser, db: Session = Depends(get_db)):
     pairs = memberships_for_home(db, user.id)
     my_ids = {lg.id for lg, _ in pairs}
+    pending_leagues = pending_memberships_for_home(db, user.id)
+    pending_league_ids = {lg.id for lg in pending_leagues}
+    excluded_ids = my_ids | pending_league_ids
     q = select(League).where(League.is_public.is_(True))
-    if my_ids:
-        q = q.where(~League.id.in_(my_ids))
+    if excluded_ids:
+        q = q.where(~League.id.in_(excluded_ids))
     leagues_public = db.scalars(q.order_by(League.name)).all()
 
     mc = match_count_by_league(db, set(my_ids))
@@ -57,6 +61,7 @@ def frontpage(request: Request, user: ApprovedUser, db: Session = Depends(get_db
             "user": user,
             "league_slug": "",
             "my_leagues": pairs,
+            "pending_leagues": pending_leagues,
             "discover_leagues": leagues_public,
             "match_counts": mc,
             "pending_admin_count": pend,
@@ -219,7 +224,7 @@ def reject_member(
 
 
 @router.get("/leagues/{slug}/members", response_class=HTMLResponse)
-def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = Depends(get_db)):
+def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = Depends(get_db), new_invite: str | None = None):
     league = get_league_by_slug(db, slug)
     if not league:
         return RedirectResponse("/", status_code=303)
@@ -244,14 +249,6 @@ def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = 
         )
         .options(joinedload(LeagueMember.user))
         .order_by(LeagueMember.joined_at)
-    ).all()
-
-    # Invite links are visible (and creatable) by any active member.
-    invites = db.scalars(
-        select(LeagueInvite).where(
-            LeagueInvite.league_id == league.id,
-            LeagueInvite.accepted_at.is_(None),
-        ).order_by(LeagueInvite.created_at.desc()).limit(20)
     ).all()
 
     link_candidates: list[User] = []
@@ -279,7 +276,7 @@ def members_page(slug: str, request: Request, user: ApprovedUser, db: Session = 
             "membership": membership,
             "pending": pend,
             "members": active_members,
-            "invites": invites,
+            "new_invite_token": new_invite,
             "link_candidates": link_candidates,
             "is_admin": admin,
             "nav_members_pending": len(pend) if admin else 0,
@@ -420,7 +417,7 @@ def create_invite(
         )
     )
     db.commit()
-    return RedirectResponse(f"/leagues/{slug}/members", status_code=303)
+    return RedirectResponse(f"/leagues/{slug}/members?new_invite={tok}", status_code=303)
 
 
 @router.post("/leagues/{slug}/rename")

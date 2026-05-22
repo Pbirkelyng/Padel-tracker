@@ -122,17 +122,23 @@ def compute_leaderboard(
 
         sets_a = sum(1 for s in match.set_scores if s.team_a_games > s.team_b_games)
         sets_b = sum(1 for s in match.set_scores if s.team_b_games > s.team_a_games)
-        match_winner = "A" if sets_a > sets_b else "B"
+        if sets_a > sets_b:
+            match_winner: str | None = "A"
+        elif sets_b > sets_a:
+            match_winner = "B"
+        else:
+            match_winner = None  # draw
 
         for mp in match.players:
             if mp.team is None or mp.user_id not in stats_map:
                 continue
             st = stats_map[mp.user_id]
             st.matches_played += 1
-            if mp.team == match_winner:
-                st.matches_won += 1
-            else:
-                st.matches_lost += 1
+            if match_winner is not None:
+                if mp.team == match_winner:
+                    st.matches_won += 1
+                else:
+                    st.matches_lost += 1
 
             for s in match.set_scores:
                 if mp.team == "A":

@@ -19,14 +19,18 @@
 </div>
 
 {% if is_league_admin and is_current_season %}
-<details class="mb-6 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-  <summary class="cursor-pointer font-medium text-slate-800">End season</summary>
-  <form method="post" action="/leagues/{{ league_slug }}/leaderboard/end-season" class="mt-4 space-y-3" onsubmit="return confirm('End current season? Ratings soft-reset toward default.');">
-    <input type="hidden" name="confirm_end" value="yes">
-    <p class="text-sm text-slate-500">Freezes leaderboard snapshot, soft-resets ELO, opens a new season for new matches.</p>
-    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium">Confirm end season</button>
-  </form>
-</details>
+<div class="mb-6 rounded-2xl bg-white border border-red-200/70 p-5 shadow-sm">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="font-semibold text-slate-800">End season</p>
+      <p class="text-sm text-slate-500 mt-0.5">Freezes leaderboard snapshot, soft-resets ELO, and opens a new season.</p>
+    </div>
+    <form method="post" action="/leagues/{{ league_slug }}/leaderboard/end-season" onsubmit="return confirm('End current season? ELO ratings will soft-reset toward default and a new season will begin.');">
+      <input type="hidden" name="confirm_end" value="yes">
+      <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(220,38,38,0.45)]">End season</button>
+    </form>
+  </div>
+</div>
 {% endif %}
 
 <div id="leaderboard-table">

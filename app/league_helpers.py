@@ -259,6 +259,19 @@ def link_placeholder_to_user(
     return True
 
 
+def pending_memberships_for_home(db: Session, user_id: int) -> list[League]:
+    """Return leagues where the user has a pending_request (not yet approved)."""
+    memberships = db.scalars(
+        select(LeagueMember)
+        .where(
+            LeagueMember.user_id == user_id,
+            LeagueMember.status == LeagueMemberStatus.pending_request,
+        )
+        .options(joinedload(LeagueMember.league))
+    ).all()
+    return [m.league for m in memberships if m.league is not None]
+
+
 def memberships_for_home(db: Session, user_id: int) -> list[tuple[League, LeagueMember]]:
     memberships = db.scalars(
         select(LeagueMember)

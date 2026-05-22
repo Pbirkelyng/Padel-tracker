@@ -33,21 +33,17 @@
 
 <section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
   <h2 class="text-lg font-semibold text-slate-900 mb-1">Invite links</h2>
-  <p class="text-xs text-slate-500 mb-4">Share with anyone you want to add. They'll need an account, then the link drops them straight into the league.</p>
-  <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3 {% if invites %}mb-5{% endif %}">
+  <p class="text-xs text-slate-500 mb-4">Generate a one-time link to share. They'll need an account, then the link drops them straight into the league.</p>
+  <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3 {% if new_invite_token %}mb-5{% endif %}">
     <input type="text" name="email_hint" placeholder="Note for yourself (optional, e.g. 'Maria')" class="flex-1 min-w-[200px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
     <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Generate link</button>
   </form>
-  {% if invites %}
-  <ul class="space-y-3 text-sm">
-    {% for inv in invites %}
-    <li class="flex flex-wrap items-center gap-3 p-4 bg-slate-50/80 rounded-2xl border border-slate-100">
-      <code class="text-xs break-all flex-1 text-slate-700" id="link-{{ inv.id }}">{{ request.url.scheme }}://{{ request.url.netloc }}/invite/{{ inv.token }}</code>
-      {% if inv.email %}<span class="text-xs text-slate-400 shrink-0">{{ inv.email }}</span>{% endif %}
-      <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('link-{{ inv.id }}').textContent)" class="shrink-0 text-blue-600 text-xs font-semibold hover:text-blue-800">Copy</button>
-    </li>
-    {% endfor %}
-  </ul>
+  {% if new_invite_token %}
+  <div class="flex flex-wrap items-center gap-3 p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200">
+    <code class="text-xs break-all flex-1 text-slate-700" id="new-invite-link">{{ request.url.scheme }}://{{ request.url.netloc }}/invite/{{ new_invite_token }}</code>
+    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('new-invite-link').textContent).then(function(){this.textContent='Copied!';}.bind(this))" class="shrink-0 text-emerald-700 text-xs font-semibold hover:text-emerald-900">Copy</button>
+  </div>
+  <p class="text-xs text-slate-400 mt-2">This link won't be shown again — copy it now to share.</p>
   {% endif %}
 </section>
 

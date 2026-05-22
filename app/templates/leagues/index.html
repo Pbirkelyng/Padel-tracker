@@ -70,6 +70,23 @@
   {% endfor %}
 </section>
 
+{% if pending_leagues %}
+<section class="mb-10">
+  <p class="text-xs font-semibold uppercase tracking-[0.12em] text-amber-600 mb-3">Awaiting approval</p>
+  <ul class="space-y-3">
+    {% for lg in pending_leagues %}
+    <li class="flex items-center justify-between gap-4 rounded-3xl bg-white border border-amber-200/70 px-5 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+      <span class="font-medium text-slate-900">{{ lg.name }}</span>
+      <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+        <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+        Pending approval
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 {% if discover_leagues %}
 <section>
   <p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-3">Discover</p>

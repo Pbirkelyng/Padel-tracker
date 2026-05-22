@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -27,6 +27,7 @@ class Match(Base):
     season_id: Mapped[int] = mapped_column(ForeignKey("seasons.id", ondelete="CASCADE"))
     winner_team: Mapped[str | None] = mapped_column(String(1), nullable=True)
     elo_delta: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ended_early: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 

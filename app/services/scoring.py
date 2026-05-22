@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from math import ceil
+from typing import Literal
 
 VALID_SET_SCORES: set[tuple[int, int]] = {
     (6, 0),
@@ -25,7 +26,7 @@ class SetInput:
 
 @dataclass
 class MatchResult:
-    winner: str  # 'A' or 'B'
+    winner: str  # 'A', 'B', or 'DRAW'
     sets_a: int
     sets_b: int
 
@@ -76,6 +77,49 @@ def validate_set_score(
 
 def sets_needed_to_win(best_of: int) -> int:
     return ceil(best_of / 2)
+
+
+def validate_match_scores_lenient(
+    sets: list[SetInput],
+) -> tuple["MatchResult | None", "str | None"]:
+    """Lenient validation for early-ended matches.
+
+    Rules:
+    - At least 1 set required.
+    - Games must be non-negative integers.
+    - Individual sets may be tied (3-3 etc.) — those count for neither team.
+    - Match can end in DRAW if sets_a == sets_b.
+    - No best-of format enforcement.
+    """
+    if not sets:
+        return None, "At least one set is required"
+
+    sets_a = 0
+    sets_b = 0
+    seen_numbers: set[int] = set()
+
+    for s in sorted(sets, key=lambda x: x.set_number):
+        if s.set_number in seen_numbers:
+            return None, f"Duplicate set number {s.set_number}"
+        seen_numbers.add(s.set_number)
+
+        if s.team_a_games < 0 or s.team_b_games < 0:
+            return None, f"Set {s.set_number}: Games cannot be negative"
+
+        if s.team_a_games > s.team_b_games:
+            sets_a += 1
+        elif s.team_b_games > s.team_a_games:
+            sets_b += 1
+        # tied set — counts for neither
+
+    if sets_a > sets_b:
+        winner: str = "A"
+    elif sets_b > sets_a:
+        winner = "B"
+    else:
+        winner = "DRAW"
+
+    return MatchResult(winner=winner, sets_a=sets_a, sets_b=sets_b), None
 
 
 def validate_match_scores(

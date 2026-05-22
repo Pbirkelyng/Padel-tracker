@@ -24,6 +24,7 @@ from app.services.scoring import (
     SetInput,
     sets_needed_to_win,
     validate_match_scores,
+    validate_match_scores_lenient,
 )
 from app.templating import templates
 
@@ -79,10 +80,15 @@ def match_detail(
     league_admin = is_league_admin(mem)
     sets_needed = sets_needed_to_win(match.best_of)
     valid_set_pairs_json = json.dumps(sorted(VALID_SET_SCORES))
+    is_participant = any(p.user_id == user.id for p in match.players)
     can_manage = (
         match.status == MatchStatus.scheduled and (user.is_admin or match.created_by_id == user.id or league_admin)
     )
     can_finalize = can_manage
+    can_finalize_early = (
+        match.status == MatchStatus.scheduled
+        and (is_participant or match.created_by_id == user.id or league_admin or user.is_admin)
+    )
     can_reopen_completed = user.is_admin or league_admin
 
     player_ratings: dict[int, float] = {}
@@ -143,6 +149,7 @@ def match_detail(
             "can_manage_teams": match.status == MatchStatus.scheduled,
             "can_manage_scores": match.status == MatchStatus.scheduled and can_manage,
             "can_manage_roster": can_manage,
+            "can_finalize_early": can_finalize_early,
             "can_self_join": can_self_join,
             "player_ratings": player_ratings,
             "addable_members": addable_members,
@@ -274,6 +281,7 @@ def save_scores(
     team_a_tb: list[str] = Form(default=[]),
     team_b_tb: list[str] = Form(default=[]),
     action: str = Form("save"),
+    ended_early: str = Form(""),
 ):
     match = _load_match(db, match_id)
     if not match:
@@ -340,7 +348,19 @@ def save_scores(
                 status_code=303,
             )
 
-        result, err = validate_match_scores(sets, match.best_of)
+        is_ended_early = ended_early == "on"
+
+        if is_ended_early:
+            is_participant = any(p.user_id == user.id for p in match.players)
+            league_admin = is_league_admin(mem)
+            if not (is_participant or match.created_by_id == user.id or league_admin or user.is_admin):
+                return RedirectResponse(f"/matches/{match_id}", status_code=303)
+            result, err = validate_match_scores_lenient(sets)
+        else:
+            if not (user.is_admin or match.created_by_id == user.id or is_league_admin(mem)):
+                return RedirectResponse(f"/matches/{match_id}", status_code=303)
+            result, err = validate_match_scores(sets, match.best_of)
+
         if err or result is None:
             return RedirectResponse(
                 f"/matches/{match_id}?error={(err or 'Invalid+scores').replace(' ', '+')}",
@@ -362,12 +382,18 @@ def save_scores(
             )
 
         match.status = MatchStatus.completed
-        match.winner_team = result.winner
+        match.ended_early = is_ended_early
+        match.winner_team = None if result.winner == "DRAW" else result.winner
         match.elo_delta = compute_elo_delta(db, match, result.winner)
         apply_elo_for_match(db, match, result.winner)
         db.commit()
+
+        if result.winner == "DRAW":
+            success_msg = "Match+finalized+Draw"
+        else:
+            success_msg = f"Match+finalized+Team+{result.winner}+wins"
         return RedirectResponse(
-            f"/matches/{match_id}?success=Match+finalized+Team+{result.winner}+wins",
+            f"/matches/{match_id}?success={success_msg}",
             status_code=303,
         )
 

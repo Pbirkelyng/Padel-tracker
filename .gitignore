@@ -22,6 +22,7 @@ env/
 
 # Local SQLite database (use Postgres in production)
 *.db
+*.db.bak
 *.sqlite
 *.sqlite3
 

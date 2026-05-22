@@ -324,6 +324,9 @@ def save_scores(
             return RedirectResponse(f"/matches/{match_id}", status_code=303)
         for existing in list(match.set_scores):
             db.delete(existing)
+        # Flush deletes before inserting new rows so Postgres doesn't trip on
+        # the (match_id, set_number) unique constraint mid-flush.
+        db.flush()
         for s in sets:
             db.add(
                 SetScore(
@@ -369,6 +372,10 @@ def save_scores(
 
         for existing in list(match.set_scores):
             db.delete(existing)
+        # Flush deletes before inserting so the unique constraint on
+        # (match_id, set_number) doesn't blow up on Postgres when an already-
+        # completed match is re-finalised after being reopened.
+        db.flush()
         for s in sets:
             db.add(
                 SetScore(
@@ -380,6 +387,9 @@ def save_scores(
                     team_b_tb=s.team_b_tb,
                 )
             )
+        # Ensure new SetScore rows are visible before compute_elo_delta reads
+        # match.set_scores for the margin multiplier.
+        db.flush()
 
         match.status = MatchStatus.completed
         match.ended_early = is_ended_early

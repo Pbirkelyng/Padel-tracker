@@ -387,15 +387,14 @@ def save_scores(
                     team_b_tb=s.team_b_tb,
                 )
             )
-        # Ensure new SetScore rows are visible before compute_elo_delta reads
-        # match.set_scores for the margin multiplier.
         db.flush()
 
+        net = sum(s.team_a_games - s.team_b_games for s in sets)
         match.status = MatchStatus.completed
         match.ended_early = is_ended_early
         match.winner_team = None if result.winner == "DRAW" else result.winner
-        match.elo_delta = compute_elo_delta(db, match, result.winner)
-        apply_elo_for_match(db, match, result.winner)
+        match.elo_delta = compute_elo_delta(db, match, result.winner, net_games=net)
+        apply_elo_for_match(db, match, result.winner, net_games=net)
         db.commit()
 
         if result.winner == "DRAW":

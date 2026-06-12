@@ -38,7 +38,7 @@ app.include_router(leaderboard.router)
 app.include_router(admin.router)
 
 
-@app.get("/healthz")
+@app.api_route("/healthz", methods=["GET", "HEAD"])
 def healthz():
     """Lightweight liveness probe for uptime pingers (no DB, no auth)."""
     return JSONResponse({"status": "ok"})

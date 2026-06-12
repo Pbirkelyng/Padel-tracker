@@ -11,6 +11,16 @@
 {% endif %}
 {% endmacro %}
 
+{% macro elo_change(value) %}
+{%- if value is not none and value|round(0)|int != 0 -%}
+{%- if value > 0 -%}
+<span class="text-xs font-bold text-emerald-600 tabular-nums">+{{ value|round(0)|int }}</span>
+{%- else -%}
+<span class="text-xs font-bold text-rose-600 tabular-nums">-{{ value|abs|round(0)|int }}</span>
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}
+
 {% macro flash_message(kind, message) %}
 {% if message %}
 <div class="flash-message mb-4 p-4 rounded-2xl text-sm border {% if kind == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-900{% else %}bg-red-50 border-red-200 text-red-800{% endif %}" {% if kind == 'success' %}data-auto-dismiss="4000"{% endif %}>

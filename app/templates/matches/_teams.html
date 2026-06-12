@@ -16,7 +16,10 @@
       <h3 class="font-semibold text-blue-900 mb-3">Team A</h3>
       <ul class="space-y-2 text-sm text-slate-800">
         {% for p in team_a %}
-        <li class="flex justify-between gap-2"><span>{{ p.user.display_name }}</span><span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span></li>
+        <li class="flex justify-between gap-2">
+          <span>{{ p.user.display_name }} {{ ui.elo_change(elo_changes.get(p.user_id)) }}</span>
+          <span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span>
+        </li>
         {% else %}
         <li class="text-slate-400">No players yet</li>
         {% endfor %}
@@ -26,7 +29,10 @@
       <h3 class="font-semibold text-amber-900 mb-3">Team B</h3>
       <ul class="space-y-2 text-sm text-slate-800">
         {% for p in team_b %}
-        <li class="flex justify-between gap-2"><span>{{ p.user.display_name }}</span><span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span></li>
+        <li class="flex justify-between gap-2">
+          <span>{{ p.user.display_name }} {{ ui.elo_change(elo_changes.get(p.user_id)) }}</span>
+          <span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span>
+        </li>
         {% else %}
         <li class="text-slate-400">No players yet</li>
         {% endfor %}

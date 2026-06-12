@@ -19,7 +19,12 @@ from app.models import (
     SetScore,
     UserStatus,
 )
-from app.services.elo import apply_elo_for_match, compute_elo_delta, reverse_elo_for_match
+from app.services.elo import (
+    apply_elo_for_match,
+    compute_elo_delta,
+    reverse_elo_for_match,
+    split_team_changes,
+)
 from app.services.scoring import (
     VALID_SET_SCORES,
     SetInput,
@@ -106,6 +111,14 @@ def _build_match_context(
 
     player_ratings = _player_ratings(db, match)
 
+    elo_changes: dict[int, float] = {}
+    if match.status == MatchStatus.completed and match.elo_delta is not None:
+        change_a, change_b = split_team_changes(match.elo_delta)
+        for p in team_a:
+            elo_changes[p.user_id] = change_a
+        for p in team_b:
+            elo_changes[p.user_id] = change_b
+
     addable_members: list[LeagueMember] = []
     if can_manage and len(match.players) < 4:
         existing_ids = {p.user_id for p in match.players}
@@ -151,6 +164,7 @@ def _build_match_context(
         "can_finalize_early": can_finalize_early,
         "can_self_join": can_self_join,
         "player_ratings": player_ratings,
+        "elo_changes": elo_changes,
         "addable_members": addable_members,
         "sets_needed": sets_needed,
         "valid_set_pairs_json": valid_set_pairs_json,

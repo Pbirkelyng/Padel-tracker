@@ -24,6 +24,7 @@ from app.models import (
     User,
     UserStatus,
 )
+from app.services.elo import split_team_changes
 from app.templating import templates
 
 router = APIRouter(tags=["schedule"], prefix="/leagues/{slug}")
@@ -40,6 +41,11 @@ def _annotate_teams(match: Match) -> None:
     match.unassigned_names = [  # type: ignore[attr-defined]
         p.user.display_name for p in match.players if p.team not in ("A", "B")
     ]
+    change_a, change_b = (None, None)
+    if match.status == MatchStatus.completed and match.elo_delta is not None:
+        change_a, change_b = split_team_changes(match.elo_delta)
+    match.elo_change_a = change_a  # type: ignore[attr-defined]
+    match.elo_change_b = change_b  # type: ignore[attr-defined]
 
 
 def _score_summary(match: Match) -> str:

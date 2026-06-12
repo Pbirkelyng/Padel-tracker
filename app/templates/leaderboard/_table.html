@@ -1,8 +1,8 @@
 <div class="overflow-x-auto card">
   <table class="w-full text-sm">
     <thead class="sticky top-0 z-10">
-      <tr class="border-b border-slate-200 text-slate-500 text-left bg-slate-50">
-        <th class="py-3 px-4 font-medium">#</th>
+      <tr class="border-b border-slate-200 text-slate-500 text-left bg-slate-50/90">
+        <th class="py-3 px-4 font-medium w-14">#</th>
         <th class="py-3 px-4 font-medium">
           <a href="/leagues/{{ league_slug }}/leaderboard?sort=name{{ season_qs|default('', true)|safe }}" class="hover:text-blue-600 {% if sort == 'name' %}text-blue-700 font-semibold{% endif %}"
              hx-get="/leagues/{{ league_slug }}/leaderboard?sort=name{{ season_qs|default('', true)|safe }}" hx-target="#leaderboard-table" hx-swap="innerHTML">Player</a>
@@ -28,9 +28,24 @@
     </thead>
     <tbody>
       {% for row in rows %}
-      <tr class="border-b border-slate-100 hover:bg-slate-50/80 {% if loop.index <= 3 %}bg-blue-50/30{% endif %}">
-        <td class="py-3 px-4 text-slate-400 tabular-nums">{{ loop.index }}</td>
-        <td class="py-3 px-4 font-medium text-slate-900">{{ row.display_name }}</td>
+      <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors">
+        <td class="py-3 px-4">
+          {% if loop.index == 1 %}
+          <span class="rank-badge-gold">{{ loop.index }}</span>
+          {% elif loop.index == 2 %}
+          <span class="rank-badge-silver">{{ loop.index }}</span>
+          {% elif loop.index == 3 %}
+          <span class="rank-badge-bronze">{{ loop.index }}</span>
+          {% else %}
+          <span class="text-slate-400 tabular-nums pl-2">{{ loop.index }}</span>
+          {% endif %}
+        </td>
+        <td class="py-3 px-4">
+          <div class="flex items-center gap-3">
+            <span class="avatar-chip">{{ row.display_name[0]|upper }}</span>
+            <span class="font-medium text-slate-900">{{ row.display_name }}</span>
+          </div>
+        </td>
         <td class="py-3 px-4 text-right text-blue-600 font-semibold tabular-nums">{{ row.rating|round(0)|int }}</td>
         <td class="py-3 px-4 text-right tabular-nums">{{ row.matches_won }}-{{ row.matches_lost }}</td>
         <td class="py-3 px-4 text-right tabular-nums">{{ row.match_win_pct|round(1) }}%</td>

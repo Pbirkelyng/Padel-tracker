@@ -10,12 +10,25 @@
 }
 
 @layer components {
+  .page-bg {
+    @apply bg-slate-50;
+    background-image:
+      radial-gradient(1200px 500px at 50% -200px, rgba(219, 234, 254, 0.75) 0%, transparent 60%),
+      linear-gradient(to bottom, #f8fafc, #ffffff);
+  }
+
   .safe-bottom {
     padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50;
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50;
+    background-image: linear-gradient(to bottom right, #2563eb, #4f46e5);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    @apply shadow-md;
+    background-image: linear-gradient(to bottom right, #1d4ed8, #4338ca);
   }
 
   .btn-secondary {
@@ -27,7 +40,11 @@
   }
 
   .card {
-    @apply rounded-2xl bg-white border border-slate-200 shadow-sm;
+    @apply rounded-2xl bg-white border border-slate-200/80 shadow-sm;
+  }
+
+  .card-interactive {
+    @apply card transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
   }
 
   .page-title {
@@ -48,6 +65,38 @@
 
   .input-field {
     @apply bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500;
+  }
+
+  .avatar-chip {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-semibold text-xs shrink-0 ring-1 ring-blue-200/60;
+  }
+
+  .rank-badge {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded-full font-bold text-xs tabular-nums;
+  }
+
+  .rank-badge-gold {
+    @apply rank-badge bg-amber-100 text-amber-800 ring-2 ring-amber-200;
+  }
+
+  .rank-badge-silver {
+    @apply rank-badge bg-slate-100 text-slate-700 ring-2 ring-slate-200;
+  }
+
+  .rank-badge-bronze {
+    @apply rank-badge bg-orange-100 text-orange-800 ring-2 ring-orange-200;
+  }
+
+  .nav-tab {
+    @apply flex flex-col items-center gap-0.5 text-[10px] px-3 py-1.5 rounded-xl transition-colors;
+  }
+
+  .nav-tab-active {
+    @apply text-blue-600 font-semibold bg-blue-50/90;
+  }
+
+  .nav-tab-inactive {
+    @apply text-slate-500;
   }
 
   .htmx-indicator {

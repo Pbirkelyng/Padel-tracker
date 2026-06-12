@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import ApprovedUser
+from app.htmx_utils import is_fragment_request
 from app.league_helpers import (
     get_league_by_slug,
     is_league_admin,
@@ -71,7 +72,7 @@ def leaderboard_page(
     rows = compute_leaderboard(db, league.id, target_season)
     rows = sort_leaderboard(rows, sort)
 
-    if request.headers.get("HX-Request"):
+    if is_fragment_request(request):
         return templates.TemplateResponse(
             request,
             "leaderboard/_table.html",

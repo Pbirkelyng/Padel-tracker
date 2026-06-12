@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
 from app.deps import ApprovedUser
+from app.htmx_utils import is_fragment_request
 from app.league_helpers import get_active_membership, is_league_admin, nav_pending_for_league
 from app.models import (
     LeagueMember,
@@ -174,7 +175,7 @@ def _respond_teams(
     *,
     redirect_url: str | None = None,
 ) -> Response:
-    if request.headers.get("HX-Request"):
+    if is_fragment_request(request):
         return _htmx_teams_response(request, ctx)
     return RedirectResponse(redirect_url or f"/matches/{match_id}", status_code=303)
 
@@ -184,7 +185,7 @@ def _respond_format(
     match_id: int,
     ctx: dict,
 ) -> Response:
-    if request.headers.get("HX-Request"):
+    if is_fragment_request(request):
         return _htmx_format_response(request, ctx)
     return RedirectResponse(f"/matches/{match_id}", status_code=303)
 
@@ -531,7 +532,7 @@ def update_best_of(
     mx = max((s.set_number for s in match.set_scores), default=0)
     if mx > best_of:
         err = f"Too+many+saved+sets+for+that+format+(max+set+{mx})"
-        if request.headers.get("HX-Request"):
+        if is_fragment_request(request):
             return Response("", headers={"HX-Redirect": f"/matches/{match_id}?error={err}"})
         return RedirectResponse(f"/matches/{match_id}?error={err}", status_code=303)
 

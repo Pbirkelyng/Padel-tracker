@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     admin_email: str = "admin@example.com"
     database_url: str = "sqlite:///./padel.db"
     elo_k: float = 24.0
+    elo_loss_factor: float = 0.5
     default_rating: float = 1000.0
     session_max_age_days: int = 30
 

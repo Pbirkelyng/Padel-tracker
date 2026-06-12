@@ -29,6 +29,19 @@ from app.templating import templates
 router = APIRouter(tags=["schedule"], prefix="/leagues/{slug}")
 
 
+def _annotate_teams(match: Match) -> None:
+    """Attach display-name lists per team for the schedule template."""
+    match.team_a_names = [  # type: ignore[attr-defined]
+        p.user.display_name for p in match.players if p.team == "A"
+    ]
+    match.team_b_names = [  # type: ignore[attr-defined]
+        p.user.display_name for p in match.players if p.team == "B"
+    ]
+    match.unassigned_names = [  # type: ignore[attr-defined]
+        p.user.display_name for p in match.players if p.team not in ("A", "B")
+    ]
+
+
 def _score_summary(match: Match) -> str:
     if not match.set_scores:
         return ""
@@ -78,8 +91,11 @@ def schedule_page(
         or (m.status == MatchStatus.scheduled and m.scheduled_at < now)
     ]
 
+    for m in upcoming:
+        _annotate_teams(m)
     for m in past:
         m.score_summary = _score_summary(m)  # type: ignore[attr-defined]
+        _annotate_teams(m)
 
     return templates.TemplateResponse(
         request,

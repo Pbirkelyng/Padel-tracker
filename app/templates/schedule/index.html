@@ -21,12 +21,29 @@
           <div class="min-w-0">
             <p class="font-semibold text-slate-900 group-hover:text-blue-700">{{ m.scheduled_at|format_datetime }}</p>
             {% if m.location %}<p class="text-sm text-slate-600 mt-1 flex items-center gap-1.5"><svg class="h-3.5 w-3.5 shrink-0 text-blue-600/70" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>{{ m.location }}</p>{% endif %}
-            <p class="text-sm text-slate-500 mt-2">
-              {% for p in m.players %}{{ p.user.display_name }}{% if not loop.last %}, {% endif %}{% endfor %}
-            </p>
           </div>
           <span class="status-badge border-blue-200 bg-blue-50 text-blue-800 shrink-0 h-fit tabular-nums">Best of {{ m.best_of }}</span>
         </div>
+        {% if m.team_a_names or m.team_b_names %}
+        <div class="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl bg-slate-50/80 border border-slate-100 px-4 py-3">
+          <div class="min-w-0 space-y-1">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Team A</p>
+            {% for n in m.team_a_names %}<p class="text-sm font-medium text-slate-800 truncate">{{ n }}</p>{% else %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+          </div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">vs</span>
+          <div class="min-w-0 space-y-1 text-right">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Team B</p>
+            {% for n in m.team_b_names %}<p class="text-sm font-medium text-slate-800 truncate">{{ n }}</p>{% else %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+          </div>
+        </div>
+        {% if m.unassigned_names %}
+        <p class="text-xs text-slate-400 mt-2">Not yet on a team: {{ m.unassigned_names|join(', ') }}</p>
+        {% endif %}
+        {% else %}
+        <p class="text-sm text-slate-500 mt-2">
+          {% for p in m.players %}{{ p.user.display_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+        </p>
+        {% endif %}
       </a>
     </li>
     {% endfor %}
@@ -47,15 +64,40 @@
           <div class="min-w-0">
             <p class="font-medium text-slate-900">{{ m.scheduled_at|format_datetime }}</p>
             {% if m.location %}<p class="text-sm text-slate-500 mt-0.5">{{ m.location }}</p>{% endif %}
-            <p class="text-sm text-slate-500 mt-2">
-              {% for p in m.players %}{{ p.user.display_name }}{% if not loop.last %}, {% endif %}{% endfor %}
-            </p>
-            {% if m.score_summary %}<p class="text-sm font-medium text-blue-600 mt-2 tabular-nums">{{ m.score_summary }}</p>{% endif %}
           </div>
           {% if m.status.value == 'completed' and m.winner_team %}
-          <span class="status-badge border-blue-200 bg-blue-50 text-blue-800 shrink-0 h-fit">Team {{ m.winner_team }} won</span>
+          <span class="status-badge border-emerald-200 bg-emerald-50 text-emerald-800 shrink-0 h-fit">Team {{ m.winner_team }} won</span>
           {% endif %}
         </div>
+        {% if m.team_a_names or m.team_b_names %}
+        <div class="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl bg-slate-50/80 border border-slate-100 px-4 py-3">
+          <div class="min-w-0 space-y-1">
+            <p class="text-[10px] font-semibold uppercase tracking-wider {% if m.winner_team == 'A' %}text-emerald-600{% else %}text-slate-400{% endif %}">Team A{% if m.winner_team == 'A' %} · won{% endif %}</p>
+            {% for n in m.team_a_names %}<p class="text-sm truncate {% if m.winner_team == 'A' %}font-semibold text-slate-900{% elif m.winner_team == 'B' %}text-slate-500{% else %}font-medium text-slate-800{% endif %}">{{ n }}</p>{% else %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+          </div>
+          <div class="text-center space-y-0.5">
+            {% if m.score_summary %}
+            {% for set_score in m.score_summary.split(', ') %}
+            <p class="text-sm font-semibold text-blue-600 tabular-nums whitespace-nowrap">{{ set_score }}</p>
+            {% endfor %}
+            {% else %}
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">vs</span>
+            {% endif %}
+          </div>
+          <div class="min-w-0 space-y-1 text-right">
+            <p class="text-[10px] font-semibold uppercase tracking-wider {% if m.winner_team == 'B' %}text-emerald-600{% else %}text-slate-400{% endif %}">Team B{% if m.winner_team == 'B' %} · won{% endif %}</p>
+            {% for n in m.team_b_names %}<p class="text-sm truncate {% if m.winner_team == 'B' %}font-semibold text-slate-900{% elif m.winner_team == 'A' %}text-slate-500{% else %}font-medium text-slate-800{% endif %}">{{ n }}</p>{% else %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+          </div>
+        </div>
+        {% if m.unassigned_names %}
+        <p class="text-xs text-slate-400 mt-2">Not on a team: {{ m.unassigned_names|join(', ') }}</p>
+        {% endif %}
+        {% else %}
+        <p class="text-sm text-slate-500 mt-2">
+          {% for p in m.players %}{{ p.user.display_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+        </p>
+        {% if m.score_summary %}<p class="text-sm font-medium text-blue-600 mt-2 tabular-nums">{{ m.score_summary }}</p>{% endif %}
+        {% endif %}
       </a>
     </li>
     {% endfor %}

@@ -2,7 +2,7 @@
 
 import math
 
-from app.services.elo import margin_multiplier
+from app.services.elo import margin_multiplier, split_team_changes
 
 
 def test_margin_multiplier_zero():
@@ -68,3 +68,36 @@ def test_underdog_draw_nonzero_games():
     # e.g. 4-3 tie — net from underdog's perspective = +1
     d = _elo_delta_pure(K, 800, 1200, 0.5, 1)
     assert d > 0
+
+
+def test_split_changes_win_worth_more_than_loss():
+    """Winner gains the full delta; loser loses only half (loss_factor 0.5)."""
+    change_a, change_b = split_team_changes(20.0, 0.5)
+    assert change_a == 20.0
+    assert change_b == -10.0
+    assert change_a > abs(change_b)
+
+
+def test_split_changes_losing_still_negative():
+    change_a, change_b = split_team_changes(20.0, 0.5)
+    assert change_b < 0
+    # Symmetric case from team B's win
+    change_a, change_b = split_team_changes(-20.0, 0.5)
+    assert change_a == -10.0
+    assert change_b == 20.0
+    assert change_a < 0
+
+
+def test_split_changes_zero_delta_no_movement():
+    assert split_team_changes(0.0, 0.5) == (0.0, 0.0)
+
+
+def test_participation_accumulates_rating():
+    """A 50% player over many matches nets more than a one-off winner."""
+    delta = 20.0  # equal-strength matchup
+    one_off_winner = split_team_changes(delta, 0.5)[0]
+    regular = 0.0
+    for _ in range(5):  # 5 wins, 5 losses
+        regular += split_team_changes(delta, 0.5)[0]
+        regular += split_team_changes(-delta, 0.5)[0]
+    assert regular > one_off_winner

@@ -18,7 +18,7 @@ from app.models import (
     User,
     UserStatus,
 )
-from app.services.elo import apply_elo_for_match, compute_elo_delta
+from app.services.elo import apply_elo_for_match, compute_elo_delta, split_team_changes
 
 
 def _make_user(db: Session, email: str) -> User:
@@ -145,9 +145,14 @@ def test_finalize_applies_nonzero_elo_with_net_games(db_session: Session):
     apply_elo_for_match(db_session, loaded, "A", net_games=net)
     db_session.flush()
 
+    change_a, change_b = split_team_changes(delta)
     ratings_after = [member.rating for member in members]
     assert ratings_after != ratings_before
-    assert ratings_after[0] == ratings_before[0] + delta
-    assert ratings_after[1] == ratings_before[1] + delta
-    assert ratings_after[2] == ratings_before[2] - delta
-    assert ratings_after[3] == ratings_before[3] - delta
+    assert ratings_after[0] == ratings_before[0] + change_a
+    assert ratings_after[1] == ratings_before[1] + change_a
+    assert ratings_after[2] == ratings_before[2] + change_b
+    assert ratings_after[3] == ratings_before[3] + change_b
+    # Winners gain more than losers lose
+    assert change_a > 0
+    assert change_b < 0
+    assert change_a > abs(change_b)

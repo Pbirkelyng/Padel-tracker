@@ -50,7 +50,7 @@ Open http://localhost:8000
 When a match is **finalized** on `/matches/{id}`:
 
 1. Set scores are saved and `match.status` becomes `completed`.
-2. `apply_elo_for_match` updates each player's `LeagueMember.rating` for that league.
+2. `apply_elo_for_match` updates each player's `LeagueMember.rating` for that league. The change is margin-aware (6-0 moves more than 6-4) and **asymmetric**: winners gain the full delta while losers only lose `ELO_LOSS_FACTOR` (default 0.5) of it, so frequent players accumulate rating over time and a one-off win can't top the leaderboard.
 3. The **leaderboard** for the current season reads those ratings (ELO column) and recomputes W–L, set, and game stats from all `completed` matches in that season.
 
 Reopening a match (league or site admin only) reverses the ELO delta and returns the match to `scheduled` so teams and scores can be edited again.
@@ -85,6 +85,7 @@ Open [preview/index.html](preview/index.html) in your browser for **no-server** 
 | `ADMIN_EMAIL` | Email that becomes site admin on register |
 | `DATABASE_URL` | Default `sqlite:///./padel.db` |
 | `ELO_K` | ELO K-factor (default 24) |
+| `ELO_LOSS_FACTOR` | Fraction of the delta the losing team loses (default 0.5) |
 | `DEFAULT_RATING` | Starting ELO per league member (default 1000) |
 
 ## Deploy

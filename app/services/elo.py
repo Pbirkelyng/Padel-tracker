@@ -1,6 +1,6 @@
 """Doubles ELO — ratings stored on LeagueMember.
 
-New formula (margin-aware):
+Margin-aware formula:
     S_a   = 1.0 (win) | 0.0 (loss) | 0.5 (draw)
     E_a   = 1 / (1 + 10^((R_b - R_a) / 400))    standard expected score
     mult  = log(1 + |net_games|)                  margin multiplier
@@ -10,6 +10,14 @@ net_games is the absolute total of (team_a_games - team_b_games) across all
 sets, viewed from team A's side.  For a 6-0, 6-0 win by A: net = +12,
 mult ≈ ln(13) ≈ 2.56.  For a 3-3 single set the multiplier is 0 and no
 ratings change.
+
+Asymmetric application (rewards participation):
+    The winning side gains the full |delta|; the losing side only loses
+    |delta| * loss_factor (default 0.5).  Losing is still negative, but a
+    win is worth more than a loss costs, so players who show up often
+    accumulate rating over time while a one-off winner banks only a single
+    win.  match.elo_delta stores the raw symmetric delta for team A; the
+    actual per-team changes are derived from it via split_team_changes().
 """
 
 import json
@@ -49,6 +57,19 @@ def _league_members_for_team(db: Session, match: Match, team: str) -> list[Leagu
 def margin_multiplier(game_diff: int) -> float:
     """log(1 + |game_diff|) — scales ELO change with the margin of victory."""
     return math.log(1 + abs(game_diff))
+
+
+def split_team_changes(delta: float, loss_factor: float | None = None) -> tuple[float, float]:
+    """Turn the symmetric team-A delta into (change_a, change_b).
+
+    The side that loses rating is dampened by loss_factor so winning is
+    worth more than losing costs.
+    """
+    if loss_factor is None:
+        loss_factor = get_settings().elo_loss_factor
+    if delta >= 0:
+        return delta, -delta * loss_factor
+    return delta * loss_factor, -delta
 
 
 def _net_games_a(match: Match) -> int:
@@ -103,13 +124,14 @@ def apply_elo_for_match(
     if len(team_a) != 2 or len(team_b) != 2:
         raise ValueError("Each team must have exactly 2 players for ELO")
     delta = compute_elo_delta(db, match, winner, net_games=net_games)
+    change_a, change_b = split_team_changes(delta)
     deltas: dict[int, float] = {}
     for m in team_a:
-        m.rating += delta
-        deltas[m.user_id] = delta
+        m.rating += change_a
+        deltas[m.user_id] = change_a
     for m in team_b:
-        m.rating -= delta
-        deltas[m.user_id] = -delta
+        m.rating += change_b
+        deltas[m.user_id] = change_b
     db.flush()
     return deltas
 
@@ -117,7 +139,7 @@ def apply_elo_for_match(
 def reverse_elo_for_match(db: Session, match: Match) -> None:
     if match.elo_delta is None:
         return
-    delta = match.elo_delta
+    change_a, change_b = split_team_changes(match.elo_delta)
     for mp in match.players:
         if mp.team not in ("A", "B"):
             continue
@@ -130,9 +152,9 @@ def reverse_elo_for_match(db: Session, match: Match) -> None:
         if not lm:
             continue
         if mp.team == "A":
-            lm.rating -= delta
+            lm.rating -= change_a
         else:
-            lm.rating += delta
+            lm.rating -= change_b
     match.elo_delta = None
     match.winner_team = None
     db.flush()
@@ -153,7 +175,7 @@ def _winner_from_set_rows(set_rows: list[SetScore]) -> tuple[str, int]:
 def recompute_league_elo(db: Session, league_id: int) -> None:
     """Replay all completed matches in a league to rebuild ratings and elo_delta.
 
-    Mirrors the logic in alembic/versions/006_recompute_elo_history.py.
+    Mirrors the logic in alembic/versions/007_asymmetric_elo_recompute.py.
     Caller must commit the session.
     """
     settings = get_settings()
@@ -198,10 +220,11 @@ def recompute_league_elo(db: Session, league_id: int) -> None:
                 continue
 
             delta = compute_elo_delta(db, match, winner, net_games=net_games)
+            change_a, change_b = split_team_changes(delta)
             for member in team_a:
-                member.rating += delta
+                member.rating += change_a
             for member in team_b:
-                member.rating -= delta
+                member.rating += change_b
 
             match.elo_delta = delta
             match.winner_team = None if winner == "DRAW" else winner

@@ -2,12 +2,12 @@
 {% block title %}Members — {{ league.name }}{% endblock %}
 {% block content %}
 {% set league_slug = league.slug %}
-<p class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-2">{{ league.name }}</p>
-<h1 class="text-3xl font-bold tracking-tight text-slate-900">Members</h1>
+<p class="section-label mb-2">{{ league.name }}</p>
+<h1 class="page-title">Members</h1>
 <p class="text-slate-500 text-sm mb-8 mt-2">Invite links · pending requests · roster</p>
 
 {% if is_admin and pending %}
-<div class="mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-rose-50/90 border border-rose-200/80 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+<div class="mb-6 flex flex-wrap items-center gap-3 card p-5 border-rose-200 bg-rose-50/80">
   <span class="relative inline-flex h-2.5 w-2.5">
     <span class="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping"></span>
     <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500"></span>
@@ -20,26 +20,26 @@
 {% endif %}
 
 {% if is_admin %}
-<section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
+<section class="mb-8 card p-6 md:p-7">
   <h2 class="text-lg font-semibold text-slate-900 mb-1">Add a player</h2>
   <p class="text-xs text-slate-500 mb-4">Use this for friends who don't have an account yet. You can link them to a real account later.</p>
   <form method="post" action="/leagues/{{ league.slug }}/members/placeholder" class="flex flex-wrap gap-3">
-    <input type="text" name="display_name" required placeholder="Name (e.g. Maria)" class="flex-1 min-w-[160px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
-    <input type="email" name="email_hint" placeholder="Email (optional)" class="flex-1 min-w-[180px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
-    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Add player</button>
+    <input type="text" name="display_name" required placeholder="Name (e.g. Maria)" class="input-field flex-1 min-w-[160px]">
+    <input type="email" name="email_hint" placeholder="Email (optional)" class="input-field flex-1 min-w-[180px]">
+    <button type="submit" class="btn-primary">Add player</button>
   </form>
 </section>
 {% endif %}
 
-<section class="mb-8 rounded-3xl bg-white border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(37,99,235,0.14)] p-6 md:p-7">
+<section class="mb-8 card p-6 md:p-7">
   <h2 class="text-lg font-semibold text-slate-900 mb-1">Invite links</h2>
   <p class="text-xs text-slate-500 mb-4">Generate a one-time link to share. They'll need an account, then the link drops them straight into the league.</p>
   <form method="post" action="/leagues/{{ league.slug }}/invites" class="flex flex-wrap gap-3 {% if new_invite_token %}mb-5{% endif %}">
-    <input type="text" name="email_hint" placeholder="Note for yourself (optional, e.g. 'Maria')" class="flex-1 min-w-[200px] border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500">
-    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(37,99,235,0.45)]">Generate link</button>
+    <input type="text" name="email_hint" placeholder="Note for yourself (optional, e.g. 'Maria')" class="input-field flex-1 min-w-[200px]">
+    <button type="submit" class="btn-primary">Generate link</button>
   </form>
   {% if new_invite_token %}
-  <div class="flex flex-wrap items-center gap-3 p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200">
+  <div class="flex flex-wrap items-center gap-3 p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200 flash-message" data-auto-dismiss="8000">
     <code class="text-xs break-all flex-1 text-slate-700" id="new-invite-link">{{ request.url.scheme }}://{{ request.url.netloc }}/invite/{{ new_invite_token }}</code>
     <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('new-invite-link').textContent).then(function(){this.textContent='Copied!';}.bind(this))" class="shrink-0 text-emerald-700 text-xs font-semibold hover:text-emerald-900">Copy</button>
   </div>
@@ -49,14 +49,14 @@
 
 {% if pending and is_admin %}
 <section id="pending" class="mb-8 scroll-mt-20">
-  <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-rose-600 mb-3">Pending</h2>
+  <h2 class="section-label text-rose-600 mb-3">Pending</h2>
   <ul class="space-y-3">
     {% for p in pending %}
-    <li class="flex flex-wrap justify-between gap-3 items-center rounded-3xl bg-white border border-slate-200/70 p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <li class="flex flex-wrap justify-between gap-3 items-center card p-5">
       <span class="font-medium text-slate-900">{{ p.user.display_name }} <span class="text-slate-500 font-normal text-sm">({{ p.user.email }})</span></span>
       <span class="flex gap-2">
-        <form method="post" action="/leagues/{{ league.slug }}/members/{{ p.user.id }}/approve"><button class="text-sm px-4 py-2 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-[0_6px_12px_-8px_rgba(37,99,235,0.5)]">Approve</button></form>
-        <form method="post" action="/leagues/{{ league.slug }}/members/{{ p.user.id }}/reject"><button class="text-sm px-4 py-2 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50">Reject</button></form>
+        <form method="post" action="/leagues/{{ league.slug }}/members/{{ p.user.id }}/approve"><button class="btn-primary text-sm px-4 py-2">Approve</button></form>
+        <form method="post" action="/leagues/{{ league.slug }}/members/{{ p.user.id }}/reject"><button class="btn-secondary text-sm px-4 py-2">Reject</button></form>
       </span>
     </li>
     {% endfor %}
@@ -65,8 +65,8 @@
 {% endif %}
 
 <section>
-  <h2 class="text-xs font-semibold uppercase tracking-[0.12em] text-blue-600 mb-4">Active members</h2>
-  <ul class="rounded-3xl bg-white border border-slate-200/70 divide-y divide-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden">
+  <h2 class="section-label mb-4">Active members</h2>
+  <ul class="card divide-y divide-slate-100 overflow-hidden">
     {% for m in members %}
     <li class="px-5 py-4 text-sm">
       <div class="flex justify-between items-center gap-3">
@@ -85,13 +85,13 @@
       </div>
 
       {% if is_admin and m.user.is_placeholder %}
-      <div id="ph-actions-{{ m.user.id }}" class="hidden mt-4 space-y-4 bg-slate-50/70 rounded-2xl p-4 border border-slate-100">
+      <div id="ph-actions-{{ m.user.id }}" class="hidden mt-4 space-y-4 bg-slate-50 rounded-2xl p-4 border border-slate-100">
         <details class="group">
           <summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-slate-600 hover:text-slate-900">Edit name &amp; email</summary>
           <form method="post" action="/leagues/{{ league.slug }}/members/{{ m.user.id }}/edit-placeholder" class="flex flex-wrap gap-2 mt-3">
-            <input type="text" name="display_name" value="{{ m.user.display_name }}" required class="flex-1 min-w-[140px] border border-slate-200 rounded-lg px-3 py-2 text-sm">
-            <input type="email" name="email_hint" value="{{ m.user.placeholder_email_hint or '' }}" placeholder="Email (optional)" class="flex-1 min-w-[160px] border border-slate-200 rounded-lg px-3 py-2 text-sm">
-            <button type="submit" class="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700">Save</button>
+            <input type="text" name="display_name" value="{{ m.user.display_name }}" required class="input-field flex-1 min-w-[140px] py-2">
+            <input type="email" name="email_hint" value="{{ m.user.placeholder_email_hint or '' }}" placeholder="Email (optional)" class="input-field flex-1 min-w-[160px] py-2">
+            <button type="submit" class="btn-primary text-xs px-3 py-2">Save</button>
           </form>
         </details>
 
@@ -100,13 +100,13 @@
           <summary class="cursor-pointer text-xs font-semibold uppercase tracking-wider text-slate-600 hover:text-slate-900">Link to registered user</summary>
           <p class="text-xs text-slate-500 mt-2 mb-2">This merges all matches and ELO from this placeholder into the selected registered user, then removes the placeholder.</p>
           <form method="post" action="/leagues/{{ league.slug }}/members/{{ m.user.id }}/link" class="flex flex-wrap gap-2">
-            <select name="real_user_id" required class="flex-1 min-w-[200px] border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+            <select name="real_user_id" required class="input-field flex-1 min-w-[200px] py-2">
               <option value="" disabled selected>Pick a registered user…</option>
               {% for cand in link_candidates %}
               <option value="{{ cand.id }}">{{ cand.display_name }} ({{ cand.email }})</option>
               {% endfor %}
             </select>
-            <button type="submit" class="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700">Link</button>
+            <button type="submit" class="btn-primary text-xs px-3 py-2">Link</button>
           </form>
         </details>
         {% else %}
@@ -114,7 +114,7 @@
         {% endif %}
 
         <form method="post" action="/leagues/{{ league.slug }}/members/{{ m.user.id }}/delete-placeholder" onsubmit="return confirm('Remove this placeholder? Their match history will be deleted.');">
-          <button type="submit" class="text-xs font-semibold text-rose-600 hover:text-rose-700">Remove placeholder</button>
+          <button type="submit" class="btn-destructive">Remove placeholder</button>
         </form>
       </div>
       {% endif %}

@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, Query, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -55,54 +55,56 @@ def _league_membership_for_user(db: Session, league_id: int, user_id: int) -> Le
     return get_active_membership(db, league_id, user_id)
 
 
-@router.get("/matches/{match_id}", response_class=HTMLResponse)
-def match_detail(
-    request: Request,
-    match_id: int,
-    user: ApprovedUser,
-    db: Session = Depends(get_db),
-    error: str | None = Query(None),
-    success: str | None = Query(None),
-):
-    match = _load_match(db, match_id)
-    if not match:
-        return RedirectResponse("/", status_code=303)
+def _player_ratings(db: Session, match: Match) -> dict[int, float]:
+    player_ids = [mp.user_id for mp in match.players]
+    if not player_ids:
+        return {}
+    ratings = {
+        m.user_id: m.rating
+        for m in db.scalars(
+            select(LeagueMember).where(
+                LeagueMember.league_id == match.league_id,
+                LeagueMember.user_id.in_(player_ids),
+            )
+        ).all()
+    }
+    for pid in player_ids:
+        ratings.setdefault(pid, 1000.0)
+    return ratings
 
-    mem = _league_membership_for_user(db, match.league_id, user.id)
-    if not mem:
-        return RedirectResponse("/", status_code=303)
 
+def _build_match_context(
+    db: Session,
+    match: Match,
+    user,
+    *,
+    error: str | None = None,
+    success: str | None = None,
+    teams_error: str | None = None,
+) -> dict:
     team_a = [p for p in match.players if p.team == "A"]
     team_b = [p for p in match.players if p.team == "B"]
     unassigned = [p for p in match.players if p.team is None]
 
     league_slug = match.league.slug if match.league else "default"
-    league_admin = is_league_admin(mem)
+    mem = get_active_membership(db, match.league_id, user.id)
+    league_admin = is_league_admin(mem) if mem else False
+
     sets_needed = sets_needed_to_win(match.best_of)
     valid_set_pairs_json = json.dumps(sorted(VALID_SET_SCORES))
     is_participant = any(p.user_id == user.id for p in match.players)
     can_manage = (
-        match.status == MatchStatus.scheduled and (user.is_admin or match.created_by_id == user.id or league_admin)
+        match.status == MatchStatus.scheduled
+        and (user.is_admin or match.created_by_id == user.id or league_admin)
     )
-    can_finalize = can_manage
     can_finalize_early = (
         match.status == MatchStatus.scheduled
         and (is_participant or match.created_by_id == user.id or league_admin or user.is_admin)
     )
     can_reopen_completed = user.is_admin or league_admin
 
-    player_ratings: dict[int, float] = {}
-    for mp in match.players:
-        lm = db.scalar(
-            select(LeagueMember).where(
-                LeagueMember.league_id == match.league_id,
-                LeagueMember.user_id == mp.user_id,
-            )
-        )
-        player_ratings[mp.user_id] = lm.rating if lm else 1000.0
+    player_ratings = _player_ratings(db, match)
 
-    # League members not already on the match — admins/creators can add them
-    # while the match is still scheduled.
     addable_members: list[LeagueMember] = []
     if can_manage and len(match.players) < 4:
         existing_ids = {p.user_id for p in match.players}
@@ -123,8 +125,6 @@ def match_detail(
             if m.user_id not in existing_ids and m.user.status == UserStatus.approved
         ]
 
-    # Any active member who isn't already on a scheduled match with open
-    # slots can sign themselves up.
     user_on_match = any(p.user_id == user.id for p in match.players)
     can_self_join = (
         match.status == MatchStatus.scheduled
@@ -132,36 +132,87 @@ def match_detail(
         and len(match.players) < 4
     )
 
-    return templates.TemplateResponse(
-        request,
-        "matches/detail.html",
-        {
-            "user": user,
-            "match": match,
-            "team_a": team_a,
-            "team_b": team_b,
-            "unassigned": unassigned,
-            "error": error,
-            "success": success,
-            "league_slug": league_slug,
-            "can_edit": can_manage,
-            "can_reopen_completed": can_reopen_completed,
-            "can_manage_teams": match.status == MatchStatus.scheduled,
-            "can_manage_scores": match.status == MatchStatus.scheduled and can_manage,
-            "can_manage_roster": can_manage,
-            "can_finalize_early": can_finalize_early,
-            "can_self_join": can_self_join,
-            "player_ratings": player_ratings,
-            "addable_members": addable_members,
-            "sets_needed": sets_needed,
-            "valid_set_pairs_json": valid_set_pairs_json,
-            "nav_members_pending": nav_pending_for_league(db, match.league, user.id),
-        },
-    )
+    return {
+        "user": user,
+        "match": match,
+        "team_a": team_a,
+        "team_b": team_b,
+        "unassigned": unassigned,
+        "error": error,
+        "success": success,
+        "teams_error": teams_error,
+        "league_slug": league_slug,
+        "can_edit": can_manage,
+        "can_reopen_completed": can_reopen_completed,
+        "can_manage_teams": match.status == MatchStatus.scheduled,
+        "can_manage_scores": match.status == MatchStatus.scheduled and can_manage,
+        "can_manage_roster": can_manage,
+        "can_finalize_early": can_finalize_early,
+        "can_self_join": can_self_join,
+        "player_ratings": player_ratings,
+        "addable_members": addable_members,
+        "sets_needed": sets_needed,
+        "valid_set_pairs_json": valid_set_pairs_json,
+        "nav_members_pending": nav_pending_for_league(db, match.league, user.id),
+    }
+
+
+def _htmx_teams_response(request: Request, ctx: dict) -> HTMLResponse:
+    return templates.TemplateResponse(request, "matches/_teams.html", ctx)
+
+
+def _htmx_format_response(request: Request, ctx: dict) -> Response:
+    response = templates.TemplateResponse(request, "matches/_format.html", ctx)
+    response.headers["HX-Refresh"] = "true"
+    return response
+
+
+def _respond_teams(
+    request: Request,
+    match_id: int,
+    ctx: dict,
+    *,
+    redirect_url: str | None = None,
+) -> Response:
+    if request.headers.get("HX-Request"):
+        return _htmx_teams_response(request, ctx)
+    return RedirectResponse(redirect_url or f"/matches/{match_id}", status_code=303)
+
+
+def _respond_format(
+    request: Request,
+    match_id: int,
+    ctx: dict,
+) -> Response:
+    if request.headers.get("HX-Request"):
+        return _htmx_format_response(request, ctx)
+    return RedirectResponse(f"/matches/{match_id}", status_code=303)
+
+
+@router.get("/matches/{match_id}", response_class=HTMLResponse)
+def match_detail(
+    request: Request,
+    match_id: int,
+    user: ApprovedUser,
+    db: Session = Depends(get_db),
+    error: str | None = Query(None),
+    success: str | None = Query(None),
+):
+    match = _load_match(db, match_id)
+    if not match:
+        return RedirectResponse("/", status_code=303)
+
+    mem = _league_membership_for_user(db, match.league_id, user.id)
+    if not mem:
+        return RedirectResponse("/", status_code=303)
+
+    ctx = _build_match_context(db, match, user, error=error, success=success)
+    return templates.TemplateResponse(request, "matches/detail.html", ctx)
 
 
 @router.post("/matches/{match_id}/players")
 def add_player_to_match(
+    request: Request,
     match_id: int,
     user: ApprovedUser,
     db: Session = Depends(get_db),
@@ -178,18 +229,18 @@ def add_player_to_match(
         user.is_admin or match.created_by_id == user.id or is_league_admin(mem)
     )
     is_self_add = player_id == user.id
-    # Non-admin members can add themselves (sign up for a match). Admins,
-    # match creators, and site admins can add anyone.
     if not is_creator_or_admin and not is_self_add:
         return RedirectResponse(f"/matches/{match_id}", status_code=303)
 
     if len(match.players) >= 4:
-        return RedirectResponse(
-            f"/matches/{match_id}?error=Maximum+4+players+per+match",
-            status_code=303,
+        ctx = _build_match_context(
+            db,
+            match,
+            user,
+            teams_error="Maximum 4 players per match",
         )
+        return _respond_teams(request, match_id, ctx)
 
-    # Validate the candidate is an active member of this league.
     target_membership = get_active_membership(db, match.league_id, player_id)
     if not target_membership:
         return RedirectResponse(f"/matches/{match_id}", status_code=303)
@@ -199,11 +250,14 @@ def add_player_to_match(
 
     db.add(MatchPlayer(match_id=match.id, user_id=player_id, team=None))
     db.commit()
-    return RedirectResponse(f"/matches/{match_id}", status_code=303)
+    match = _load_match(db, match_id)
+    ctx = _build_match_context(db, match, user)
+    return _respond_teams(request, match_id, ctx)
 
 
 @router.post("/matches/{match_id}/players/{player_id}/remove")
 def remove_player_from_match(
+    request: Request,
     match_id: int,
     player_id: int,
     user: ApprovedUser,
@@ -222,20 +276,27 @@ def remove_player_from_match(
     if not is_creator_or_admin:
         return RedirectResponse(f"/matches/{match_id}", status_code=303)
 
-    # Never let the match end up with zero players (re-create one instead).
     if len(match.players) <= 1:
-        return RedirectResponse(
-            f"/matches/{match_id}?error=A+match+needs+at+least+one+player",
-            status_code=303,
+        ctx = _build_match_context(
+            db,
+            match,
+            user,
+            teams_error="A match needs at least one player",
         )
+        return _respond_teams(request, match_id, ctx)
 
     mp = next((p for p in match.players if p.user_id == player_id), None)
     if mp:
         db.delete(mp)
         db.commit()
-    return RedirectResponse(f"/matches/{match_id}", status_code=303)
+    match = _load_match(db, match_id)
+    ctx = _build_match_context(db, match, user)
+    return _respond_teams(request, match_id, ctx)
+
+
 @router.post("/matches/{match_id}/teams/{player_id}")
 def assign_single_team(
+    request: Request,
     match_id: int,
     player_id: int,
     user: ApprovedUser,
@@ -260,13 +321,19 @@ def assign_single_team(
     a_count, b_count = _team_counts(match.players)
     if a_count > 2 or b_count > 2:
         db.rollback()
-        return RedirectResponse(
-            f"/matches/{match_id}?error=Each+team+can+have+at+most+2+players",
-            status_code=303,
+        match = _load_match(db, match_id)
+        ctx = _build_match_context(
+            db,
+            match,
+            user,
+            teams_error="Each team can have at most 2 players",
         )
+        return _respond_teams(request, match_id, ctx)
 
     db.commit()
-    return RedirectResponse(f"/matches/{match_id}", status_code=303)
+    match = _load_match(db, match_id)
+    ctx = _build_match_context(db, match, user)
+    return _respond_teams(request, match_id, ctx)
 
 
 @router.post("/matches/{match_id}/scores")
@@ -324,8 +391,6 @@ def save_scores(
             return RedirectResponse(f"/matches/{match_id}", status_code=303)
         for existing in list(match.set_scores):
             db.delete(existing)
-        # Flush deletes before inserting new rows so Postgres doesn't trip on
-        # the (match_id, set_number) unique constraint mid-flush.
         db.flush()
         for s in sets:
             db.add(
@@ -372,9 +437,6 @@ def save_scores(
 
         for existing in list(match.set_scores):
             db.delete(existing)
-        # Flush deletes before inserting so the unique constraint on
-        # (match_id, set_number) doesn't blow up on Postgres when an already-
-        # completed match is re-finalised after being reopened.
         db.flush()
         for s in sets:
             db.add(
@@ -447,6 +509,7 @@ def update_match_details(
 
 @router.post("/matches/{match_id}/best_of")
 def update_best_of(
+    request: Request,
     match_id: int,
     user: ApprovedUser,
     db: Session = Depends(get_db),
@@ -467,14 +530,16 @@ def update_best_of(
 
     mx = max((s.set_number for s in match.set_scores), default=0)
     if mx > best_of:
-        return RedirectResponse(
-            f"/matches/{match_id}?error=Too+many+saved+sets+for+that+format+(max+set+{mx})",
-            status_code=303,
-        )
+        err = f"Too+many+saved+sets+for+that+format+(max+set+{mx})"
+        if request.headers.get("HX-Request"):
+            return Response("", headers={"HX-Redirect": f"/matches/{match_id}?error={err}"})
+        return RedirectResponse(f"/matches/{match_id}?error={err}", status_code=303)
 
     match.best_of = best_of
     db.commit()
-    return RedirectResponse(f"/matches/{match_id}", status_code=303)
+    match = _load_match(db, match_id)
+    ctx = _build_match_context(db, match, user)
+    return _respond_format(request, match_id, ctx)
 
 
 @router.post("/matches/{match_id}/reopen")

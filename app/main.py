@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.bootstrap import bootstrap_admin, init_db
@@ -35,6 +36,12 @@ app.include_router(schedule.router)
 app.include_router(matches.router)
 app.include_router(leaderboard.router)
 app.include_router(admin.router)
+
+
+@app.get("/healthz")
+def healthz():
+    """Lightweight liveness probe for uptime pingers (no DB, no auth)."""
+    return JSONResponse({"status": "ok"})
 
 
 @app.get("/manifest.webmanifest")

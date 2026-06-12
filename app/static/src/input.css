@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+    font-feature-settings: "cv11", "ss01";
+  }
+}
+
+@layer components {
+  .safe-bottom {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-medium border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 transition-colors disabled:opacity-50;
+  }
+
+  .btn-destructive {
+    @apply inline-flex items-center justify-center px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white border border-slate-200 shadow-sm;
+  }
+
+  .page-title {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight text-slate-900;
+  }
+
+  .section-label {
+    @apply text-sm font-medium text-slate-500;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border;
+  }
+
+  .status-dot {
+    @apply h-1.5 w-1.5 rounded-full shrink-0;
+  }
+
+  .input-field {
+    @apply bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500;
+  }
+
+  .htmx-indicator {
+    @apply opacity-0 transition-opacity duration-150;
+  }
+
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    @apply opacity-100;
+  }
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}

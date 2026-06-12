@@ -77,12 +77,20 @@ def compute_leaderboard(
         for m in members:
             rating_by_user.setdefault(m.user_id, default_r)
 
-    users = {
-        u.id: u
-        for u in db.scalars(
-            select(User).where(User.status == UserStatus.approved).order_by(User.display_name)
-        ).all()
-    }
+    member_user_ids = [m.user_id for m in members]
+    users: dict[int, User] = {}
+    if member_user_ids:
+        users = {
+            u.id: u
+            for u in db.scalars(
+                select(User)
+                .where(
+                    User.id.in_(member_user_ids),
+                    User.status == UserStatus.approved,
+                )
+                .order_by(User.display_name)
+            ).all()
+        }
 
     stats_map: dict[int, PlayerStats] = {}
     for m in members:

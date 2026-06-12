@@ -1,0 +1,23 @@
+{% import "_macros.html" as ui %}
+<div id="match-format" class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm">
+  {% if can_manage_scores %}
+  <span class="text-slate-500">Format:</span>
+  <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-0.5 gap-0.5">
+    {% for bo in [3, 5, 7] %}
+    <form method="post" action="/matches/{{ match.id }}/best_of"
+          hx-post="/matches/{{ match.id }}/best_of"
+          hx-target="#match-format" hx-swap="outerHTML"
+          hx-indicator="#match-teams .htmx-indicator"
+          hx-disabled-elt="button"
+          class="inline">
+      <input type="hidden" name="best_of" value="{{ bo }}">
+      <button type="submit" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors {% if match.best_of == bo %}bg-blue-600 text-white{% else %}text-slate-600 hover:bg-white{% endif %}">Best of {{ bo }}</button>
+    </form>
+    {% endfor %}
+  </div>
+  {% else %}
+  <span class="text-slate-500">Best of <strong class="text-slate-800 tabular-nums">{{ match.best_of }}</strong></span>
+  {% endif %}
+  <span class="text-slate-300 hidden sm:inline">·</span>
+  {{ ui.status_badge(match.status.value, match.ended_early) }}
+</div>

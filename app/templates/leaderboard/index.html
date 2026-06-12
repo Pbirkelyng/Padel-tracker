@@ -3,12 +3,12 @@
 {% block content %}
 <div class="flex flex-wrap gap-4 items-end justify-between mb-6">
   <div>
-    <h1 class="text-3xl font-bold tracking-tight">Leaderboard</h1>
+    <h1 class="page-title">Leaderboard</h1>
     <p class="text-sm text-slate-500 mt-1">{{ league.name }}</p>
   </div>
   <form method="get" action="/leagues/{{ league_slug }}/leaderboard" class="flex gap-2 items-center">
     <label class="text-sm text-slate-600">Season
-      <select name="season" onchange="this.form.submit()" class="ml-1 border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white">
+      <select name="season" onchange="this.form.submit()" class="ml-1 input-field py-2">
         {% for s in seasons %}
         <option value="{{ s.id }}" {% if selected_season_id == s.id %}selected{% endif %}>{{ s.name }}{% if s.is_current %} · current{% endif %}</option>
         {% endfor %}
@@ -19,7 +19,7 @@
 </div>
 
 {% if is_league_admin and is_current_season %}
-<div class="mb-6 rounded-2xl bg-white border border-red-200/70 p-5 shadow-sm">
+<div class="mb-6 card p-5 border-red-200">
   <div class="flex flex-wrap items-center justify-between gap-4">
     <div>
       <p class="font-semibold text-slate-800">End season</p>
@@ -27,7 +27,7 @@
     </div>
     <form method="post" action="/leagues/{{ league_slug }}/leaderboard/end-season" onsubmit="return confirm('End current season? ELO ratings will soft-reset toward default and a new season will begin.');">
       <input type="hidden" name="confirm_end" value="yes">
-      <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_14px_-8px_rgba(220,38,38,0.45)]">End season</button>
+      <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 shadow-sm">End season</button>
     </form>
   </div>
 </div>

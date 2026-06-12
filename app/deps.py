@@ -1,7 +1,6 @@
 from typing import Annotated
 
-from fastapi import Cookie, Depends, HTTPException, status
-from fastapi.responses import RedirectResponse
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.auth_utils import SESSION_COOKIE, load_session_token
@@ -12,9 +11,14 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 def get_current_user_optional(
+    request: Request,
     db: DbSession,
     padel_session: str | None = Cookie(default=None, alias=SESSION_COOKIE),
 ) -> User | None:
+    cached = getattr(request.state, "user", None)
+    if cached is not None:
+        return cached
+
     if not padel_session:
         return None
     user_id = load_session_token(padel_session)

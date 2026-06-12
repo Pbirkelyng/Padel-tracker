@@ -99,4 +99,28 @@ Set Postgres `DATABASE_URL`, `SECRET_KEY`, `ADMIN_EMAIL` on Render / Fly / Railw
 
 Padel sets: 6-0 … 6-4, 7-5, 7-6 (tiebreak optional for 7-6). Winner: first to `ceil(best_of/2)` sets.
 
-Stack: FastAPI, SQLAlchemy 2, Alembic, Jinja2, HTMX, Tailwind CDN.
+Stack: FastAPI, SQLAlchemy 2, Alembic, Jinja2, HTMX, prebuilt Tailwind CSS.
+
+## CSS (after editing templates)
+
+Tailwind is compiled to a static file (not loaded from CDN in production):
+
+```bash
+# Windows
+powershell -ExecutionPolicy Bypass -File scripts/build_css.ps1
+
+# macOS / Linux
+./scripts/build_css.sh
+```
+
+Commit `app/static/app.css` after rebuilding. Requires Node.js (`npx`) or the [Tailwind standalone CLI](https://github.com/tailwindlabs/tailwindcss/releases) in `bin/`.
+
+## Keep-alive (Render free tier)
+
+Render free instances spin down after ~15 minutes idle. Add a free uptime pinger (UptimeRobot, cron-job.org, etc.) hitting:
+
+```
+GET https://your-app.onrender.com/healthz
+```
+
+Every **10 minutes** is enough. The endpoint skips auth and database access.

@@ -8,7 +8,7 @@ from app.auth_utils import SESSION_COOKIE, load_session_token
 from app.db import SessionLocal
 from app.models import User, UserStatus
 
-ALLOWED_WITHOUT_AUTH = {"/login", "/register"}
+ALLOWED_WITHOUT_AUTH = {"/login", "/register", "/healthz"}
 ALLOWED_PENDING = {"/pending", "/logout"}
 
 
@@ -48,12 +48,17 @@ class AuthRedirectMiddleware(BaseHTTPMiddleware):
                 return RedirectResponse("/login", status_code=303)
 
             if path in ALLOWED_PENDING:
+                db.expunge(user)
+                request.state.user = user
                 return await call_next(request)
 
             if user.status == UserStatus.pending:
                 return RedirectResponse("/pending", status_code=303)
             if user.status == UserStatus.rejected:
                 return RedirectResponse("/login?error=rejected", status_code=303)
+
+            db.expunge(user)
+            request.state.user = user
         finally:
             db.close()
 

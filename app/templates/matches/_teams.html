@@ -1,0 +1,113 @@
+{% import "_macros.html" as ui %}
+
+<section id="match-teams" class="mb-12">
+  {% if teams_error %}
+  <div class="mb-4 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-sm">{{ teams_error|replace('+', ' ') }}</div>
+  {% endif %}
+
+  <div class="flex items-center justify-between gap-3 mb-4">
+    <h2 class="section-label">Teams</h2>
+    <span class="htmx-indicator text-xs text-slate-400">Updating…</span>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 relative">
+    <div class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-400 shadow-sm">vs</div>
+    <div class="card p-5 bg-gradient-to-br from-blue-50/80 to-white border-blue-100">
+      <h3 class="font-semibold text-blue-900 mb-3">Team A</h3>
+      <ul class="space-y-2 text-sm text-slate-800">
+        {% for p in team_a %}
+        <li class="flex justify-between gap-2"><span>{{ p.user.display_name }}</span><span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span></li>
+        {% else %}
+        <li class="text-slate-400">No players yet</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="card p-5 bg-gradient-to-br from-amber-50/80 to-white border-amber-100">
+      <h3 class="font-semibold text-amber-900 mb-3">Team B</h3>
+      <ul class="space-y-2 text-sm text-slate-800">
+        {% for p in team_b %}
+        <li class="flex justify-between gap-2"><span>{{ p.user.display_name }}</span><span class="text-slate-500 tabular-nums">{{ player_ratings.get(p.user_id, 1000)|round(0)|int }}</span></li>
+        {% else %}
+        <li class="text-slate-400">No players yet</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  {% if can_manage_teams %}
+  <div class="mt-6 space-y-3">
+    <p class="text-sm font-medium text-slate-700">Assign sides <span class="font-normal text-slate-500">(any league member until finalized)</span></p>
+    {% for p in match.players %}
+    <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+      <span class="font-medium text-slate-900">
+        {{ p.user.display_name }}
+        {% if p.user.is_placeholder %}<span class="ml-1 inline-block text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">placeholder</span>{% endif %}
+      </span>
+      <div class="flex flex-wrap gap-2 items-center">
+        <div class="inline-flex rounded-xl border border-slate-200 bg-white p-0.5 gap-0.5">
+          {% for team_code, team_label, active_class in [('A', 'A', 'bg-blue-600 text-white'), ('NONE', '—', 'bg-slate-100 text-slate-600'), ('B', 'B', 'bg-amber-500 text-white')] %}
+          {% set is_active = (team_code == 'A' and p.team == 'A') or (team_code == 'B' and p.team == 'B') or (team_code == 'NONE' and p.team is none) %}
+          <form method="post" action="/matches/{{ match.id }}/teams/{{ p.user_id }}"
+                hx-post="/matches/{{ match.id }}/teams/{{ p.user_id }}"
+                hx-target="#match-teams" hx-swap="innerHTML"
+                hx-indicator="#match-teams .htmx-indicator"
+                hx-disabled-elt="button"
+                class="inline">
+            <input type="hidden" name="team" value="{{ team_code }}">
+            <button type="submit" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors {% if is_active %}{{ active_class }}{% else %}text-slate-600 hover:bg-slate-50{% endif %}">{{ team_label }}</button>
+          </form>
+          {% endfor %}
+        </div>
+        {% if can_manage_roster %}
+        <form method="post" action="/matches/{{ match.id }}/players/{{ p.user_id }}/remove"
+              hx-post="/matches/{{ match.id }}/players/{{ p.user_id }}/remove"
+              hx-target="#match-teams" hx-swap="innerHTML"
+              hx-indicator="#match-teams .htmx-indicator"
+              hx-disabled-elt="button"
+              hx-confirm="Remove {{ p.user.display_name }} from this match?"
+              class="inline">
+          <button type="submit" title="Remove from match" class="btn-destructive">✕</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if can_manage_roster and addable_members %}
+  <div class="mt-6 card p-5 bg-blue-50/40 border-blue-100">
+    <p class="text-sm font-medium text-slate-700 mb-3">Add a player <span class="font-normal text-slate-500 tabular-nums">({{ match.players|length }}/4)</span></p>
+    <form method="post" action="/matches/{{ match.id }}/players"
+          hx-post="/matches/{{ match.id }}/players"
+          hx-target="#match-teams" hx-swap="innerHTML"
+          hx-indicator="#match-teams .htmx-indicator"
+          hx-disabled-elt="button"
+          class="flex flex-wrap gap-2">
+      <select name="player_id" required class="input-field flex-1 min-w-[200px]">
+        <option value="" disabled selected>Pick a league member…</option>
+        {% for m in addable_members %}
+        <option value="{{ m.user_id }}">{{ m.user.display_name }}{% if m.user.is_placeholder %} (placeholder){% endif %}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-primary">Add</button>
+    </form>
+  </div>
+  {% elif can_manage_roster and match.players|length >= 4 %}
+  <p class="mt-6 text-xs text-slate-500">Roster is full (4 players). Remove a player above to swap.</p>
+  {% endif %}
+
+  {% if can_self_join and not can_manage_roster %}
+  <div class="mt-6 card p-5 bg-blue-50/40 border-blue-100 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-slate-700">Want in on this match? <span class="text-slate-500 tabular-nums">({{ match.players|length }}/4 signed up)</span></p>
+    <form method="post" action="/matches/{{ match.id }}/players"
+          hx-post="/matches/{{ match.id }}/players"
+          hx-target="#match-teams" hx-swap="innerHTML"
+          hx-indicator="#match-teams .htmx-indicator"
+          hx-disabled-elt="button">
+      <input type="hidden" name="player_id" value="{{ user.id }}">
+      <button type="submit" class="btn-primary">Sign me up</button>
+    </form>
+  </div>
+  {% endif %}
+  {% endif %}
+</section>

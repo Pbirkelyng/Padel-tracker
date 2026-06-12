@@ -37,3 +37,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Tailwind standalone CLI (optional local build tool)
+bin/
